@@ -16,7 +16,7 @@ haskell_bin=$haskell_install/bin
 
 #ghc
 ghc=$platform/ghc
-ghc_version=7.6.2
+ghc_version=7.6.3
 ghc_bin=$ghc/bin
 
 #MongoDB
