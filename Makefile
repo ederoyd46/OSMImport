@@ -8,7 +8,7 @@ HGEOCODER_BIN=$(BASE_DIR)/platform/osmimport/bin/OSMImport
 default: install
 
 #Default
-install: sandbox-init
+install: 
 	cabal install --with-compiler=$(GHC) 
 
 #Initialise target directories

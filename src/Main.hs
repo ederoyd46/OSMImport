@@ -70,7 +70,7 @@ loopFile dbconnection dbname filename offset = do
       let pg = getField $ pb_primitivegroup dataBlock
       nodes <- primitiveGroups pg [] stringTable granularity
       putStrLn $ "Nodes parsed = " ++ (show (length nodes))
-      -- saveNodes dbconnection dbname nodes
+      saveNodes dbconnection dbname nodes
       -- thread <- forkIO $ saveNodes nodes
       -- print thread
 
