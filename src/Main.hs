@@ -40,9 +40,6 @@ getHeaderChunk offset = do
   let Right blobHeader = S.runGet decodeMessage =<< Right headerBytes :: Either String BlobHeader
   blobData <- getBytes (fromIntegral $ (getField $ bh_datasize blobHeader) :: Int)
   let Right blob = S.runGet decodeMessage =<< Right blobData :: Either String Blob
-  -- let headerRawSize = (getField $ b_raw_size blob)
-  -- headerBlockBytes <- getBytes (fromIntegral (fromJust headerRawSize))
-  -- let Right headerBlock = S.runGet decodeMessage =<< unhex (hex headerBlockBytes) :: Either String HeaderBlock
   bytesRead <- bytesRead
   return $ ParserHeader blobHeader blob bytesRead
 
@@ -69,13 +66,11 @@ loopFile dbconnection dbname filename offset = do
     "OSMData" -> do
       let Right dataBlock = S.runGet decodeMessage =<< Right blobData :: Either String PrimitiveBlock
       let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
-      putStrLn $ "lat_offset: " ++ (show . getField $ pb_lat_offset dataBlock)
-      putStrLn $ "lon_offset: " ++ (show . getField $ pb_lon_offset dataBlock)
-      putStrLn $ "granularity: " ++ (show . fromJust . getField $ pb_granularity dataBlock)
-      -- putStrLn $ "pb_date_granularity: " ++ (show . fromJust . getField $ pb_date_granularity dataBlock)
+      let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
       let pg = getField $ pb_primitivegroup dataBlock
-      nodes <- primitiveGroups pg [] stringTable
-      saveNodes dbconnection dbname nodes
+      nodes <- primitiveGroups pg [] stringTable granularity
+      putStrLn $ "Nodes parsed = " ++ (show (length nodes))
+      -- saveNodes dbconnection dbname nodes
       -- thread <- forkIO $ saveNodes nodes
       -- print thread
 
@@ -84,13 +79,13 @@ loopFile dbconnection dbname filename offset = do
   -- return 138 -- This is the size of the header for UK
 
 -- Primitive Groups
-primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> IO [ImportNode]
-primitiveGroups [] [] _ = return []
-primitiveGroups [] y _ = return y
-primitiveGroups (x:xs) y stringTable = do 
+primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Float -> IO [ImportNode]
+primitiveGroups [] [] _ _ = return []
+primitiveGroups [] y _ _ = return y
+primitiveGroups (x:xs) y stringTable granularity = do 
   let s = getField $ pg_dense x
   let impNodes = denseNodes (fromJust s)
-  primitiveGroups xs (y ++ impNodes) stringTable
+  primitiveGroups xs (y ++ impNodes) stringTable granularity
   where
     denseNodes :: DenseNodes -> [ImportNode]
     denseNodes d = do 
@@ -98,17 +93,23 @@ primitiveGroups (x:xs) y stringTable = do
       let latitudes = Prelude.map fromIntegral (getField $ dense_nodes_lat d)
       let longitudes = Prelude.map fromIntegral (getField $ dense_nodes_lon d)
       let keyvals = Prelude.map fromIntegral (getField $ dense_nodes_keys_vals d)
+      let info = fromJust $ getField $ dense_nodes_info d
       buildNodeData ids latitudes longitudes keyvals
+      -- augmentWithDenseInfo nodes (dense_info_changeset info) (dense_info_uid info) (dense_info_version info) (dense_info_user_sid info) (dense_info_time info) []
+    -- augmentWithDenseInfo (node:nodes) (changeset:changesets) (uid:uids) (version:versions) (info:infos) (user:users) (time:times) y = do
+    --   -- let augment = node {changeset=changeset, uid=uid, version=version, user=user, time=time}
+    --   augmentWithDenseInfo nodes changesets uids version infos users times y
 
     buildNodeData :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode]
-    buildNodeData ids lat lon keyvals= 
-      buildNodes (deltaDecode ids 0 []) (calculateDegrees lat [] 100 0) (calculateDegrees lon [] 100 0) keyvals []
+    buildNodeData ids lat lon keyvals = 
+      buildNodes (deltaDecode ids 0 []) (calculateDegrees lat [] granularity 0) (calculateDegrees lon [] granularity 0) keyvals []
 
     buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode] -> [ImportNode]
     buildNodes [] [] [] [] [] = []
     buildNodes [] [] [] [] nodes = nodes
-    buildNodes (x:ids) (y:lats) (z:longs) keyvals nodes = do
-      buildNodes ids lats longs (snd nextKeyVals) (nodes ++ [ImportNode x y z (fst nextKeyVals)])
+    buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
+      let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
+      buildNodes ids lats longs (snd nextKeyVals) (nodes ++ [buildNode])
       where
         nextKeyVals = splitKeyVal keyvals []
 
@@ -127,14 +128,16 @@ primitiveGroups (x:xs) y stringTable = do
       let newcoordinate = (newlastlat * gran) / nano
       calculateDegrees xs (y ++ [newcoordinate]) gran (newlastlat)
 
-    splitKeyVal :: [Integer] -> [ParseTag] -> ([ParseTag], [Integer])
+    splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
     splitKeyVal [] [] = ([], [])
     splitKeyVal [] y = (y, [])
     splitKeyVal (x:xx:xs) y = 
       if (x == 0)
         then (y, ([xx] ++ xs))
-        else splitKeyVal xs (y ++ [ParseTag (stringTable !! (fromInteger x)) (stringTable !! (fromInteger xx))])
+        else splitKeyVal xs (y ++ [ImportTag (stringTable !! (fromInteger x)) (stringTable !! (fromInteger xx))])
     splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
+
+
 
 
 main :: IO ()
@@ -144,7 +147,6 @@ main =  do
       hPutStrLn stderr "usage: dbconnection dbname filename"
       hPutStrLn stderr "example: OSMImport '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'"
       exitFailure
-  
   
   let dbconnection = args !! 0
   let dbname = args !! 1

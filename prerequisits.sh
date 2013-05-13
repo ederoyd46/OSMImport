@@ -9,6 +9,7 @@ fi
 
 cabal update
 cabal install cabal
+cabal install cabal-install
 cabal install hello
 cabal install hasktags
 

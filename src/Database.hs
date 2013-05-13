@@ -22,7 +22,7 @@ module Database where
     where
       saveNode :: ImportNode -> IO ()
       saveNode node = do
-        let insertNode = insert "node" [ "_id" =: (Dto.id node)
+        let insertNode = insert "node" [ "_id" =: (_id node)
                                          , "latitude" =: (latitude node)
                                          , "longitude" =: (longitude node)
                                          , "tags" =: (parseTags (tags node) [])

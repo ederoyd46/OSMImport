@@ -9,11 +9,12 @@ default: install
 
 #Default
 install: sandbox-init
-	cabal sandbox-install --with-compiler=$(GHC)
+	cabal configure --with-compiler=$(GHC) 
+	cabal install --with-compiler=$(GHC) 
 
 #Initialise target directories
 sandbox-init:
-	cabal sandbox-init --sandbox $(CABAL_SANDBOX)
+	cabal sandbox init --sandbox $(CABAL_SANDBOX)
 
 #Server
 docs:
