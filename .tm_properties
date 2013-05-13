@@ -1,0 +1,15 @@
+softWrap=false
+tabSize=4
+softTabs=true
+showInvisibles=true
+myExtraExcludes="platform,download,dist,._*"
+excludeInFileChooser="{$excludeInFileChooser,$myExtraExcludes}" 
+excludeInFolderSearch="{$excludeInFolderSearch,$myExtraExcludes}" 
+excludeInBrowser="{$excludeInBrowser,$myExtraExcludes}"
+showInvisibles=true
+  
+[ *.{cabal,sh,tmpl} ]
+spellChecking=false
+softTabs=true
+tabSize=4
+

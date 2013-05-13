@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>uk.co.ederoyd.osmimport.db</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>MONGO_BIN/mongod</string>
+        <string>--port</string>
+        <string>MONGO_PORT</string>
+        <string>--rest</string>
+        <string>--nojournal</string>
+        <string>--smallfiles</string>
+        <string>--dbpath</string>
+        <string>MONGO_DATA</string>
+        <string>--logpath</string>
+        <string>LOG_DIR/mongo.log</string>
+    </array>
+    <key>KeepAlive</key>
+    <true/>
+    <key>UserName</key>
+    <string>PROCESS_OWNER</string>
+    <key>GroupName</key>
+    <string>PROCESS_OWNER</string>
+</dict>
+</plist>
