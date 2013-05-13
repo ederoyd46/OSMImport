@@ -18,7 +18,9 @@ Yes this has been written on a MAC! Although most scripts will just work with Li
 
 [DEVELOPER]
 1. Run "build-platform.sh" to install the platform (sandbox). For OSX users this also generates the launchd services in /tmp, on a reboot run "build-platform.sh" again to regenerate the launchd services (it won't reinstall mongo or ghc).
+
 2. Run "make" to build the project (note this uses cabal's sandbox feature, so make sure you have a recent version installed).
+
 3. Optionally you might want to run ". environment.sh" to add OSMImport to your path
 
 [USER]
@@ -30,8 +32,11 @@ Usage
 Three options are needed to start the import process
 
 dbconnection - the host and port the database is running on (authentication is currently not supported)
+
 dbname - the name of the database you want to import into 
+
 filename - the name of the file to import
+
 
 [EXAMPLE]
 OSMImport '127.0.0.1:7720' 'geo_data' 'england-latest.osm.pbf'
@@ -40,6 +45,7 @@ OSMImport '127.0.0.1:7720' 'geo_data' 'england-latest.osm.pbf'
 Known Issues
 ------------
 Currently the import it's a very slow process. One blob is imported at a time (usually 8000 nodes a blob) on a single thread. This issue will be addressed soon.
+
 I'm a Haskell newbie, so I appreciate the code will be bad....I'm working on it :)
 
 
