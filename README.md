@@ -23,8 +23,8 @@ Yes this has been written on a MAC! Although most scripts will just work with Li
 [DEVELOPER]
 
 1. Run "build-platform.sh" to install the platform (sandbox). For OSX users this also generates the launchd services in /tmp, on a reboot run "build-platform.sh" again to regenerate the launchd services (it won't reinstall mongo or ghc).
-2. Run "make" to build the project. (You can also run "make sandbox-init" first if you use the yet unrelease Cabal 1.17)
-3. Optionally you might want to run ". environment.sh" to add OSMImport to your path
+2. Run "make" to build the project. (You can also run "make sandbox-init" first if you use the yet unrelease Cabal 1.17).
+3. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
 
 [USER]
 
@@ -36,9 +36,9 @@ Usage
 
 Three options are needed to start the import process
 
-1. dbconnection - the host and port the database is running on (authentication is currently not supported)
-2. dbname - the name of the database you want to import into 
-3. filename - the name of the file to import
+1. dbconnection - the host and port the database is running on (authentication is currently not supported).
+2. dbname - the name of the database you want to import into.
+3. filename - the name of the file to import.
 
 
 [EXAMPLE]
