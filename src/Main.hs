@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 
 import OSMFormat
-import Dto
+import Common
 import Database
 import qualified Data.Serialize as S
 import Data.Int
@@ -37,11 +37,6 @@ main =  do
   
   performImport filename dbconnection dbname
   return ()
-
-
-
-nano :: Float
-nano = 1000000000
 
 data Chunk = Chunk {
     blob_header :: BlobHeader,
@@ -131,13 +126,6 @@ performImport fileName dbconnection dbname = do
             buildNodes ids lats longs (snd nextKeyVals) (nodes ++ [buildNode])
             where
               nextKeyVals = splitKeyVal keyvals []
-
-          deltaDecode :: Num a => [a] -> a -> [a] -> [a]
-          deltaDecode [] _ [] = []
-          deltaDecode [] _ rest = rest
-          deltaDecode (x:xs) offset rest = do
-            let lastId = offset + x
-            deltaDecode xs lastId (rest ++ [lastId])
 
           calculateDegrees :: [Float] -> [Float] -> Float -> Float -> [Float]
           calculateDegrees [] [] gran lastlat = []

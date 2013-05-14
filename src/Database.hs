@@ -4,7 +4,7 @@
 
 module Database where
   
-  import Dto
+  import Common
   import Database.MongoDB
   import qualified Data.Text as T
 
@@ -32,4 +32,4 @@ module Database where
       parseTags [] [] = []
       parseTags [] y = y
       parseTags (x:xs) y =
-        parseTags xs (y ++ [(T.pack $ key x) =: (Dto.value x)])
+        parseTags xs (y ++ [(T.pack $ key x) =: (Common.value x)])
