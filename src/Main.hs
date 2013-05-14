@@ -68,11 +68,11 @@ performImport fileName dbconnection dbname = do
       processData [] _ = return ()
       processData (x:xs) count = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
-        let blobData = BCE.concat $ BS.toChunks . decompress . BS.fromChunks $ [blobCompressed]
+        let blobUncompressed = decompress . BS.fromChunks $ [blobCompressed]
         let btype = getField $ bh_type (blob_header x)
         case btype of
           "OSMHeader" -> do 
-            let Right headerBlock = S.runGet decodeMessage =<< Right blobData :: Either String HeaderBlock
+            let Right headerBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String HeaderBlock
             -- let features = getField $ hb_required_features headerBlock
             let bbox = fromJust $ getField $ hb_bbox headerBlock
             let minlat = (fromIntegral $ getField $ hbbox_bottom bbox) / nano
@@ -82,14 +82,14 @@ performImport fileName dbconnection dbname = do
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show maxlat) ++ ") (" ++ (show minlon) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
           "OSMData" -> do
-            let Right dataBlock = S.runGet decodeMessage =<< Right blobData :: Either String PrimitiveBlock
+            let Right dataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
             let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
             let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
             let pg = getField $ pb_primitivegroup dataBlock
             nodes <- primitiveGroups pg [] stringTable granularity
             forkIO $ saveNodes dbconnection dbname nodes
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
-        
+
         processData xs (count + 1)
 
       -- Primitive Groups
@@ -103,22 +103,18 @@ performImport fileName dbconnection dbname = do
         where
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 
-            let ids = Prelude.map fromIntegral (getField $ dense_nodes_id d)
-            let latitudes = Prelude.map fromIntegral (getField $ dense_nodes_lat d)
-            let longitudes = Prelude.map fromIntegral (getField $ dense_nodes_lon d)
-            let keyvals = Prelude.map fromIntegral (getField $ dense_nodes_keys_vals d)
-            let info = fromJust $ getField $ dense_nodes_info d
-            buildNodeData ids latitudes longitudes keyvals
-            -- augmentWithDenseInfo nodes (dense_info_changeset info) (dense_info_uid info) (dense_info_version info) (dense_info_user_sid info) (dense_info_time info) []
-          -- augmentWithDenseInfo (node:nodes) (changeset:changesets) (uid:uids) (version:versions) (info:infos) (user:users) (time:times) y = do
-          --   -- let augment = node {changeset=changeset, uid=uid, version=version, user=user, time=time}
-          --   augmentWithDenseInfo nodes changesets uids version infos users times y
+            let ids = getField $ dense_nodes_id d
+            let latitudes = getField $ dense_nodes_lat d
+            let longitudes = getField $ dense_nodes_lon d
+            let keyvals = getField $ dense_nodes_keys_vals d
+            buildNodeData ids latitudes longitudes keyvals -- This it a long time to decode the delta values
+            -- let info = fromJust $ getField $ dense_nodes_info d
 
-          buildNodeData :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode]
+          buildNodeData :: [Signed Int64] -> [Signed Int64] -> [Signed Int64] -> [Int32] -> [ImportNode]
           buildNodeData ids lat lon keyvals = 
             buildNodes (deltaDecode ids 0 []) (calculateDegrees lat [] granularity 0) (calculateDegrees lon [] granularity 0) keyvals []
 
-          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode] -> [ImportNode]
+          buildNodes :: [Int] -> [Float] -> [Float] -> [Int32] -> [ImportNode] -> [ImportNode]
           buildNodes [] [] [] [] [] = []
           buildNodes [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
@@ -127,19 +123,18 @@ performImport fileName dbconnection dbname = do
             where
               nextKeyVals = splitKeyVal keyvals []
 
-          calculateDegrees :: [Float] -> [Float] -> Float -> Float -> [Float]
+          calculateDegrees :: [Signed Int64] -> [Float] -> Float -> Float -> [Float]
           calculateDegrees [] [] gran lastlat = []
           calculateDegrees [] y gran lastlat = y
           calculateDegrees (x:xs) y gran lastlat = do
-            let newlastlat = lastlat + x
+            let newlastlat = lastlat + (fromIntegral x)
             let newcoordinate = (newlastlat * gran) / nano
             calculateDegrees xs (y ++ [newcoordinate]) gran (newlastlat)
 
-          splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
+          splitKeyVal :: [Int32] -> [ImportTag] -> ([ImportTag], [Int32])
           splitKeyVal [] [] = ([], [])
           splitKeyVal [] y = (y, [])
-          splitKeyVal (x:xx:xs) y = 
-            if (x == 0)
-              then (y, ([xx] ++ xs))
-              else splitKeyVal xs (y ++ [ImportTag (stringTable !! (fromInteger x)) (stringTable !! (fromInteger xx))])
+          splitKeyVal (x:xx:xs) y 
+            | x == 0 = (y, ([xx] ++ xs))
+            | otherwise = splitKeyVal xs (y ++ [ImportTag (stringTable !! (fromIntegral x :: Int)) (stringTable !! (fromIntegral xx :: Int))])
           splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0

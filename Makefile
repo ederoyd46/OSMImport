@@ -19,9 +19,6 @@ sandbox-init:
 docs:
 	cabal haddock --executables --hyperlink-sources
 
-build: tags
-	cabal sandbox-build 
-
 tags:
 	hasktags -c src/
 

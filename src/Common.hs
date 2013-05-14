@@ -1,34 +1,44 @@
 module Common where
+  import Data.Int
   
   data ImportTag = ImportTag {  key     :: String
                                ,value   :: String
                            } deriving (Show)
   
-  data ImportNode = ImportNode { _id          :: Integer
+  data ImportNode = ImportNode { _id          :: Int
                                 ,latitude     :: Float
                                 ,longitude    :: Float
                                 ,tags         :: [ImportTag]
-                               } |
-                    ImportAugmentedNode {  _id          :: Integer
-                                          ,latitude     :: Float
-                                          ,longitude    :: Float
-                                          ,tags         :: [ImportTag]
-                                          ,changeset    :: String
-                                          ,uid          :: String
-                                          ,version      :: Integer
-                                          ,user         :: String
-                                          ,time         :: Integer
-                                        } deriving (Show)
+                               } deriving (Show)
+
+
+                    -- ImportAugmentedNode {  _id          :: Integer
+                    --                       ,latitude     :: Float
+                    --                       ,longitude    :: Float
+                    --                       ,tags         :: [ImportTag]
+                    --                       ,changeset    :: String
+                    --                       ,uid          :: String
+                    --                       ,version      :: Integer
+                    --                       ,user         :: String
+                    --                       ,time         :: Integer
+                                        
 
 
 
 
-  deltaDecode :: Num a => [a] -> a -> [a] -> [a]
+  deltaDecode :: Integral a => [a] -> Int -> [Int] -> [Int]
   deltaDecode [] _ [] = []
   deltaDecode [] _ rest = rest
   deltaDecode (x:xs) offset rest = do
-    let lastId = offset + x
+    let lastId = offset + (fromIntegral x)
     deltaDecode xs lastId (rest ++ [lastId])
+
+  
+  -- deltaDecode2 offset ids y
+  --   | (length ids) > offset = deltaDecode2 (offset+1) ids (y ++ [(foldl (+) 0 $ take offset ids)])
+  --   | otherwise = y
+  -- 
+
 
   nano :: Float
   nano = 1000000000
