@@ -63,34 +63,34 @@ performImport fileName dbconnection dbname = do
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
 
-  processData chunks
+  processData chunks 1
     where
-      processData [] = return ()
-      processData (x:xs) = do
+      processData [] _ = return ()
+      processData (x:xs) count = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
         let blobData = BCE.concat $ BS.toChunks . decompress . BS.fromChunks $ [blobCompressed]
         let btype = getField $ bh_type (blob_header x)
         case btype of
           "OSMHeader" -> do 
             let Right headerBlock = S.runGet decodeMessage =<< Right blobData :: Either String HeaderBlock
-            let features = getField $ hb_required_features headerBlock
+            -- let features = getField $ hb_required_features headerBlock
             let bbox = fromJust $ getField $ hb_bbox headerBlock
             let minlat = (fromIntegral $ getField $ hbbox_bottom bbox) / nano
             let minlon = (fromIntegral $ getField $ hbbox_left bbox) / nano
             let maxlat = (fromIntegral $ getField $ hbbox_top bbox) / nano
             let maxlon = (fromIntegral $ getField $ hbbox_right bbox) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show maxlat) ++ ") (" ++ (show minlon) ++ "," ++ (show maxlon) ++ ")"
-            print features
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
           "OSMData" -> do
             let Right dataBlock = S.runGet decodeMessage =<< Right blobData :: Either String PrimitiveBlock
             let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
             let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
             let pg = getField $ pb_primitivegroup dataBlock
             nodes <- primitiveGroups pg [] stringTable granularity
-            putStrLn $ "Nodes parsed = " ++ (show (length nodes))
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
             saveNodes dbconnection dbname nodes
         
-        processData xs
+        processData xs (count + 1)
 
       -- Primitive Groups
       primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Float -> IO [ImportNode]
