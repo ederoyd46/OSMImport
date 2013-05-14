@@ -15,19 +15,21 @@ module Database where
     close pipe
 
   saveNodes :: String -> String -> [ImportNode] -> IO ()
-  saveNodes _ _ [] = return ()
-  saveNodes dbconnection dbname (x:xs) = do 
-    saveNode x
-    saveNodes dbconnection dbname xs
+  saveNodes dbconnection dbname nodes = do 
+    let insertNodes = insertMany "node" (parseNodes nodes [])
+    runDBCommand dbconnection dbname insertNodes
+    
     where
-      saveNode :: ImportNode -> IO ()
-      saveNode node = do
-        let insertNode = insert "node" [ "_id" =: (_id node)
-                                         , "latitude" =: (latitude node)
-                                         , "longitude" =: (longitude node)
-                                         , "tags" =: (parseTags (tags node) [])
-                                         ]
-        runDBCommand dbconnection dbname insertNode
+      parseNodes [] [] = []
+      parseNodes [] y = y
+      parseNodes (x:xs) y = do
+        let buildDoc = [ "_id" =: (_id x)
+                       , "latitude" =: (latitude x)
+                       , "longitude" =: (longitude x)
+                       , "tags" =: (parseTags (tags x) [])
+                       ]
+        parseNodes xs (y ++ [buildDoc])
+
       
       parseTags [] [] = []
       parseTags [] y = y

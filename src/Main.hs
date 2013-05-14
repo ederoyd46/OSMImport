@@ -87,8 +87,8 @@ performImport fileName dbconnection dbname = do
             let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
             let pg = getField $ pb_primitivegroup dataBlock
             nodes <- primitiveGroups pg [] stringTable granularity
-            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
             saveNodes dbconnection dbname nodes
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
         
         processData xs (count + 1)
 
