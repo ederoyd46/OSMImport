@@ -49,7 +49,7 @@ OSMImport '127.0.0.1:7720' 'geo_data' 'england-latest.osm.pbf'
 Known Issues
 ------------
 
-1. Currently the import it's a very slow process. One blob is imported at a time (usually 8000 nodes a blob) on a single thread. This issue will be addressed soon.
+1. Currently the import is a slow process. One blob is imported at a time (usually 8000 nodes a blob) on a single thread. This issue will be addressed soon.
 2. I'm a Haskell newbie, so I appreciate the code will be bad....I'm working on it :)
 
 
