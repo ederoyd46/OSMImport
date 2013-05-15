@@ -19,14 +19,14 @@ module Database where
     
     where
       parseNodes [] [] = []
-      parseNodes [] y = y
+      parseNodes [] y = reverse y
       parseNodes (x:xs) y = do
         let buildDoc = [ "_id" =: (_id x)
                        , "latitude" =: (latitude x)
                        , "longitude" =: (longitude x)
                        , "tags" =: (parseTags (tags x) [])
                        ]
-        parseNodes xs (y ++ [buildDoc])
+        parseNodes xs (buildDoc : y)
 
       
       parseTags [] [] = []
