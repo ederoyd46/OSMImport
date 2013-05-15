@@ -79,7 +79,7 @@ performImport fileName dbconnection dbname = do
             let minlon = (fromIntegral $ getField $ hbbox_left bbox) / nano
             let maxlat = (fromIntegral $ getField $ hbbox_top bbox) / nano
             let maxlon = (fromIntegral $ getField $ hbbox_right bbox) / nano
-            putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show maxlat) ++ ") (" ++ (show minlon) ++ "," ++ (show maxlon) ++ ")"
+            putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
           "OSMData" -> do
             let Right dataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
@@ -93,7 +93,7 @@ performImport fileName dbconnection dbname = do
         processData xs (count + 1)
 
       -- Primitive Groups
-      primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Float -> IO [ImportNode]
+      primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Integer -> IO [ImportNode]
       primitiveGroups [] [] _ _ = return []
       primitiveGroups [] y _ _ = return y
       primitiveGroups (x:xs) y stringTable granularity = do 
@@ -103,18 +103,20 @@ performImport fileName dbconnection dbname = do
         where
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 
-            let ids = getField $ dense_nodes_id d
-            let latitudes = getField $ dense_nodes_lat d
-            let longitudes = getField $ dense_nodes_lon d
-            let keyvals = getField $ dense_nodes_keys_vals d
+            let ids = map fromIntegral (getField $ dense_nodes_id d)
+            let latitudes = map fromIntegral (getField $ dense_nodes_lat d)
+            let longitudes = map fromIntegral (getField $ dense_nodes_lon d)
+            let keyvals = map fromIntegral (getField $ dense_nodes_keys_vals d)
             buildNodeData ids latitudes longitudes keyvals -- This it a long time to decode the delta values
             -- let info = fromJust $ getField $ dense_nodes_info d
 
-          buildNodeData :: [Signed Int64] -> [Signed Int64] -> [Signed Int64] -> [Int32] -> [ImportNode]
-          buildNodeData ids lat lon keyvals = 
-            buildNodes (deltaDecode ids 0 []) (calculateDegrees lat [] granularity 0) (calculateDegrees lon [] granularity 0) keyvals []
+          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
+          buildNodeData ids lat lon keyvals = do
+            let latitudes = deltaDecode lat 0 []
+            let longitudes = deltaDecode lon 0 []
+            buildNodes (deltaDecode ids 0 []) (calculateDegrees latitudes [] granularity) (calculateDegrees longitudes [] granularity) keyvals []
 
-          buildNodes :: [Int] -> [Float] -> [Float] -> [Int32] -> [ImportNode] -> [ImportNode]
+          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode] -> [ImportNode]
           buildNodes [] [] [] [] [] = []
           buildNodes [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
@@ -123,15 +125,14 @@ performImport fileName dbconnection dbname = do
             where
               nextKeyVals = splitKeyVal keyvals []
 
-          calculateDegrees :: [Signed Int64] -> [Float] -> Float -> Float -> [Float]
-          calculateDegrees [] [] gran lastlat = []
-          calculateDegrees [] y gran lastlat = y
-          calculateDegrees (x:xs) y gran lastlat = do
-            let newlastlat = lastlat + (fromIntegral x)
-            let newcoordinate = (newlastlat * gran) / nano
-            calculateDegrees xs (y ++ [newcoordinate]) gran (newlastlat)
+          calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
+          calculateDegrees [] [] gran = []
+          calculateDegrees [] y gran = y
+          calculateDegrees (x:xs) y gran = do
+            let newcoordinate = fromIntegral (x * 100) / nano
+            calculateDegrees xs (y ++ [newcoordinate]) gran
 
-          splitKeyVal :: [Int32] -> [ImportTag] -> ([ImportTag], [Int32])
+          splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
           splitKeyVal [] [] = ([], [])
           splitKeyVal [] y = (y, [])
           splitKeyVal (x:xx:xs) y 

@@ -5,7 +5,7 @@ module Common where
                                ,value   :: String
                            } deriving (Show)
   
-  data ImportNode = ImportNode { _id          :: Int
+  data ImportNode = ImportNode { _id          :: Integer
                                 ,latitude     :: Float
                                 ,longitude    :: Float
                                 ,tags         :: [ImportTag]
@@ -26,11 +26,11 @@ module Common where
 
 
 
-  deltaDecode :: Integral a => [a] -> Int -> [Int] -> [Int]
+  deltaDecode :: Num a => [a] -> a -> [a] -> [a]
   deltaDecode [] _ [] = []
   deltaDecode [] _ rest = rest
   deltaDecode (x:xs) offset rest = do
-    let lastId = offset + (fromIntegral x)
+    let lastId = offset + x
     deltaDecode xs lastId (rest ++ [lastId])
 
   
