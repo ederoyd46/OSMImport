@@ -4,16 +4,12 @@ import OSMFormat
 import Common
 import Database
 import qualified Data.Serialize as S
-import Data.Int
 import Data.ProtocolBuffers
--- import Control.Concurrent (threadDelay, forkIO)
-import Control.Monad.State(liftIO)
+import Control.Concurrent (forkIO)
 import Control.Monad(when)
-import Data.TypeLevel (D1, D2, D3)
 import GHC.Generics (Generic)
 import Data.Maybe(fromJust, isJust, isNothing)
 import Data.Binary.Get
-import Data.Tuple
 import Codec.Compression.Zlib
 import System.Exit
 import System.IO
@@ -85,7 +81,7 @@ performImport fileName dbconnection dbname = do
             let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
             let pg = getField $ pb_primitivegroup dataBlock
             nodes <- primitiveGroups pg [] stringTable granularity
-            saveNodes dbconnection dbname nodes
+            forkIO $ saveNodes dbconnection dbname nodes
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
 
         processData xs (count + 1)
