@@ -1,6 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ExtendedDefaultRules #-}
-{-# LANGUAGE TypeOperators #-}
 
 import OSMFormat
 import Common
@@ -112,18 +110,22 @@ performImport fileName dbconnection dbname = do
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodeData ids lat lon keyvals = do
-            let latitudes = deltaDecode lat 0 []
-            let longitudes = deltaDecode lon 0 []
-            buildNodes (deltaDecode ids 0 []) (calculateDegrees latitudes [] granularity) (calculateDegrees longitudes [] granularity) keyvals []
+            let identifiers = deltaDecode ids 0 []
+            let latitudes = calculateDegrees (deltaDecode lat 0 []) [] granularity 
+            let longitudes = calculateDegrees (deltaDecode lon 0 []) [] granularity 
+            buildNodes identifiers latitudes longitudes keyvals []
 
           buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode] -> [ImportNode]
           buildNodes [] [] [] [] [] = []
           buildNodes [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
+            -- let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
             let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
             buildNodes ids lats longs (snd nextKeyVals) (nodes ++ [buildNode])
+            
             where
               nextKeyVals = splitKeyVal keyvals []
+
 
           calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
           calculateDegrees [] [] gran = []
