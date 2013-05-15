@@ -30,6 +30,6 @@ module Database where
 
       
       parseTags [] [] = []
-      parseTags [] y = y
+      parseTags [] y = reverse y
       parseTags (x:xs) y =
-        parseTags xs (y ++ [(T.pack $ key x) =: (Common.value x)])
+        parseTags xs (((T.pack $ key x) =: (Common.value x)) : y)

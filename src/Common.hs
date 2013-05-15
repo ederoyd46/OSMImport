@@ -28,10 +28,10 @@ module Common where
 
   deltaDecode :: Num a => [a] -> a -> [a] -> [a]
   deltaDecode [] _ [] = []
-  deltaDecode [] _ rest = rest
+  deltaDecode [] _ rest = reverse rest
   deltaDecode (x:xs) offset rest = do
     let lastId = offset + x
-    deltaDecode xs lastId (rest ++ [lastId])
+    deltaDecode xs lastId (lastId : rest)
 
   
   -- deltaDecode2 offset ids y

@@ -6,7 +6,7 @@ import Database
 import qualified Data.Serialize as S
 import Data.Int
 import Data.ProtocolBuffers
-import Control.Concurrent (threadDelay, forkIO)
+-- import Control.Concurrent (threadDelay, forkIO)
 import Control.Monad.State(liftIO)
 import Control.Monad(when)
 import Data.TypeLevel (D1, D2, D3)
@@ -85,7 +85,7 @@ performImport fileName dbconnection dbname = do
             let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
             let pg = getField $ pb_primitivegroup dataBlock
             nodes <- primitiveGroups pg [] stringTable granularity
-            forkIO $ saveNodes dbconnection dbname nodes
+            saveNodes dbconnection dbname nodes
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
 
         processData xs (count + 1)
@@ -105,7 +105,7 @@ performImport fileName dbconnection dbname = do
             let latitudes = map fromIntegral (getField $ dense_nodes_lat d)
             let longitudes = map fromIntegral (getField $ dense_nodes_lon d)
             let keyvals = map fromIntegral (getField $ dense_nodes_keys_vals d)
-            buildNodeData ids latitudes longitudes keyvals -- This it a long time to decode the delta values
+            buildNodeData ids latitudes longitudes keyvals -- This takes a long time to decode the delta values
             -- let info = fromJust $ getField $ dense_nodes_info d
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
@@ -119,25 +119,30 @@ performImport fileName dbconnection dbname = do
           buildNodes [] [] [] [] [] = []
           buildNodes [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
-            -- let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
             let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
-            buildNodes ids lats longs (snd nextKeyVals) (nodes ++ [buildNode])
-            
+            buildNodes ids lats longs (snd nextKeyVals) (buildNode : nodes)
             where
               nextKeyVals = splitKeyVal keyvals []
 
 
           calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
           calculateDegrees [] [] gran = []
-          calculateDegrees [] y gran = y
+          calculateDegrees [] y gran = reverse y
           calculateDegrees (x:xs) y gran = do
             let newcoordinate = fromIntegral (x * 100) / nano
-            calculateDegrees xs (y ++ [newcoordinate]) gran
+            calculateDegrees xs (newcoordinate : y) gran
 
           splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
           splitKeyVal [] [] = ([], [])
           splitKeyVal [] y = (y, [])
           splitKeyVal (x:xx:xs) y 
-            | x == 0 = (y, ([xx] ++ xs))
-            | otherwise = splitKeyVal xs (y ++ [ImportTag (stringTable !! (fromIntegral x :: Int)) (stringTable !! (fromIntegral xx :: Int))])
+            | x == 0 = (y, (xx : xs))
+            | otherwise = splitKeyVal xs (ImportTag (stringTable !! (fromIntegral x :: Int)) (stringTable !! (fromIntegral xx :: Int)) : y)
           splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
+
+
+
+
+
+
+
