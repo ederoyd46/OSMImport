@@ -47,8 +47,8 @@ getChunks limit location chunks
     let Right blob = S.runGet decodeMessage =<< Right blobData :: Either String Blob
     bytesRead <- bytesRead
     let location = fromIntegral bytesRead
-    getChunks limit location (chunks ++ [Chunk blobHeader blob])
-  | otherwise = return chunks
+    getChunks limit location ((Chunk blobHeader blob) : chunks)
+  | otherwise = return $ reverse chunks
 
 performImport :: FilePath -> [Char] -> [Char] -> IO ()
 performImport fileName dbconnection dbname = do
