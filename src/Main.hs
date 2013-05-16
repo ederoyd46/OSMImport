@@ -76,13 +76,17 @@ performImport fileName dbconnection dbname = do
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
           "OSMData" -> do
-            let Right dataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
-            let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
-            let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
-            let pg = getField $ pb_primitivegroup dataBlock
-            nodes <- primitiveGroups pg [] stringTable granularity
-            forkIO $ saveNodes dbconnection dbname nodes
-            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
+            let eitherDataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
+            case eitherDataBlock of
+              Left msg ->
+                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node [" ++ msg ++ "]"
+              Right dataBlock -> do
+                let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
+                let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
+                let pg = getField $ pb_primitivegroup dataBlock
+                nodes <- primitiveGroups pg [] stringTable granularity
+                saveNodes dbconnection dbname nodes
+                putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
 
         processData xs (count + 1)
 
