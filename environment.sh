@@ -26,5 +26,5 @@ mongo_bin=$platform/mongo/bin
 mongo_port=7720
 mongo_version=2.4.3
 
-export PATH=$haskell_bin:$ghc_bin:$PATH
+export PATH=$haskell_bin:$ghc_bin:$mongo_bin:$PATH
 

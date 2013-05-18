@@ -89,8 +89,8 @@ module OSMFormat where
     { dense_info_version :: Packed D1 (Value Int32)
     , dense_info_timestamp :: Packed D2 (Value (Signed Int64))
     , dense_info_changeset :: Packed D3 (Value (Signed Int64))
-    , dense_info_uid :: Repeated D4 (Value (Signed Int32))
-    , dense_info_user_sid :: Repeated D5 (Value (Signed Int32)) -- String IDs
+    , dense_info_uid :: Packed D4 (Value (Signed Int32))
+    , dense_info_user_sid :: Packed D5 (Value (Signed Int32)) -- String IDs
     } deriving (Generic, Show)
 
   instance Encode DenseInfo

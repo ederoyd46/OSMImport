@@ -57,10 +57,18 @@ performImport fileName dbconnection dbname = do
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
 
-  processData chunks 1
+  processData chunks [] 1
     where
-      processData [] _ = return ()
-      processData (x:xs) count = do
+      processData [] [] _ = return ()
+      processData [] y _ = do 
+        putStrLn $ "Final Database Checkpoint"
+        saveNodes dbconnection dbname y 
+      processData x y z 
+         | length y > 30000 = do 
+             putStrLn $ "Database Checkpoint"
+             saveNodes dbconnection dbname y 
+             processData x [] z
+      processData (x:xs) y count = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
         let blobUncompressed = decompress . BS.fromChunks $ [blobCompressed]
         let btype = getField $ bh_type (blob_header x)
@@ -75,20 +83,20 @@ performImport fileName dbconnection dbname = do
             let maxlon = (fromIntegral $ getField $ hbbox_right bbox) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
+            processData xs y (count + 1)
           "OSMData" -> do
             let eitherDataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
             case eitherDataBlock of
-              Left msg ->
-                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node [" ++ msg ++ "]"
+              Left msg -> do
+                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node"
+                processData xs y (count + 1)
               Right dataBlock -> do
                 let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
                 let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
                 let pg = getField $ pb_primitivegroup dataBlock
                 nodes <- primitiveGroups pg [] stringTable granularity
-                saveNodes dbconnection dbname nodes
                 putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
-
-        processData xs (count + 1)
+                processData xs (y ++ nodes) (count + 1)
 
       -- Primitive Groups
       primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Integer -> IO [ImportNode]
@@ -105,25 +113,45 @@ performImport fileName dbconnection dbname = do
             let latitudes = map fromIntegral (getField $ dense_nodes_lat d)
             let longitudes = map fromIntegral (getField $ dense_nodes_lon d)
             let keyvals = map fromIntegral (getField $ dense_nodes_keys_vals d)
-            buildNodeData ids latitudes longitudes keyvals -- This takes a long time to decode the delta values
-            -- let info = fromJust $ getField $ dense_nodes_info d
+            
+            let maybeInfo = getField $ dense_nodes_info d
+            case maybeInfo of
+              Just info -> do 
+                let versions = map fromIntegral (getField $ dense_info_version info) 
+                let timestamps = map fromIntegral (getField $ dense_info_timestamp info) 
+                let changesets = map fromIntegral (getField $ dense_info_changeset info) 
+                let uids = map fromIntegral (getField $ dense_info_uid info) 
+                let sids = map fromIntegral (getField $ dense_info_user_sid info) 
+                buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
+              Nothing -> buildNodeData ids latitudes longitudes keyvals [] [] [] [] []
 
-          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
-          buildNodeData ids lat lon keyvals = do
+          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
+          buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
             let identifiers = deltaDecode ids 0 []
             let latitudes = calculateDegrees (deltaDecode lat 0 []) [] granularity 
             let longitudes = calculateDegrees (deltaDecode lon 0 []) [] granularity 
-            buildNodes identifiers latitudes longitudes keyvals []
+            --Need to rename all these
+            let decodedTimestamps = deltaDecode timestamps 0 []
+            let decodedChangesets = deltaDecode changesets 0 []
+            let decodedUIDs = deltaDecode uids 0 []
+            let decodedUsers = deltaDecode sids 0 []
+            
+            buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers []
 
-          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [ImportNode] -> [ImportNode]
-          buildNodes [] [] [] [] [] = []
-          buildNodes [] [] [] [] nodes = nodes
-          buildNodes (id:ids) (lat:lats) (long:longs) keyvals nodes = do
-            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals)}
-            buildNodes ids lats longs (snd nextKeyVals) (buildNode : nodes)
-            where
+          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode] -> [ImportNode]
+          buildNodes [] [] [] [] [] [] [] [] [] []= []
+          buildNodes [] [] [] [] [] [] [] [] [] nodes = nodes
+          buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] nodes = do
+            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), version=Nothing, timestamp=Nothing, changeset=Nothing, uid=Nothing, sid=Nothing}
+            buildNodes ids lats longs (snd nextKeyVals) [] [] [] [] [] (buildNode : nodes)
+            where 
               nextKeyVals = splitKeyVal keyvals []
 
+          buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) nodes = do
+            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), version=(Just ver), timestamp=(Just ts), changeset=(Just cs), uid=(Just uid), sid=(Just (stringTable !! (fromIntegral sid :: Int)))}
+            buildNodes ids lats longs (snd nextKeyVals) versions timestamps changesets uids sids (buildNode : nodes)
+            where 
+              nextKeyVals = splitKeyVal keyvals []
 
           calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
           calculateDegrees [] [] gran = []

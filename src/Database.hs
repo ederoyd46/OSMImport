@@ -25,6 +25,11 @@ module Database where
                        , "latitude" =: (latitude x)
                        , "longitude" =: (longitude x)
                        , "tags" =: (parseTags (tags x) [])
+                       , "version" =: (version x)
+                       , "timestamp" =: (Common.timestamp x)
+                       , "changeset" =: (changeset x)
+                       , "uid" =: (uid x)
+                       , "user" =: (sid x)
                        ]
         parseNodes xs (buildDoc : y)
 

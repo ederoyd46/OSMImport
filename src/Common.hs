@@ -9,22 +9,12 @@ module Common where
                                 ,latitude     :: Float
                                 ,longitude    :: Float
                                 ,tags         :: [ImportTag]
+                                ,version      :: Maybe Integer
+                                ,timestamp    :: Maybe Integer
+                                ,changeset    :: Maybe Integer
+                                ,uid          :: Maybe Integer
+                                ,sid          :: Maybe String
                                } deriving (Show)
-
-
-                    -- ImportAugmentedNode {  _id          :: Integer
-                    --                       ,latitude     :: Float
-                    --                       ,longitude    :: Float
-                    --                       ,tags         :: [ImportTag]
-                    --                       ,changeset    :: String
-                    --                       ,uid          :: String
-                    --                       ,version      :: Integer
-                    --                       ,user         :: String
-                    --                       ,time         :: Integer
-                                        
-
-
-
 
   deltaDecode :: Num a => [a] -> a -> [a] -> [a]
   deltaDecode [] _ [] = []
@@ -32,13 +22,6 @@ module Common where
   deltaDecode (x:xs) offset rest = do
     let lastId = offset + x
     deltaDecode xs lastId (lastId : rest)
-
-  
-  -- deltaDecode2 offset ids y
-  --   | (length ids) > offset = deltaDecode2 (offset+1) ids (y ++ [(foldl (+) 0 $ take offset ids)])
-  --   | otherwise = y
-  -- 
-
 
   nano :: Float
   nano = 1000000000
