@@ -26,5 +26,12 @@ mongo_bin=$platform/mongo/bin
 mongo_port=7720
 mongo_version=2.4.3
 
-export PATH=$haskell_bin:$ghc_bin:$mongo_bin:$PATH
+#Redis
+redis=$platform/redis
+redis_version=2.6.13
+redis_bin=$redis
+redis_port=7721
+redis_data=$platform/data/redis
+
+export PATH=$haskell_bin:$ghc_bin:$mongo_bin:$redis_bin:$PATH
 

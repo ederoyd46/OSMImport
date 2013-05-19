@@ -2,7 +2,8 @@
 
 import OSMFormat
 import Common
-import Database
+import qualified Database as MDB
+import qualified Redis as R
 import qualified Data.Serialize as S
 import Data.ProtocolBuffers
 import Control.Concurrent (forkIO)
@@ -62,11 +63,13 @@ performImport fileName dbconnection dbname = do
       processData [] [] _ = return ()
       processData [] y _ = do 
         putStrLn $ "Final Database Checkpoint"
-        saveNodes dbconnection dbname y 
+        -- R.saveNodes' "127.0.01" 7721 y
+        MDB.saveNodes dbconnection dbname y 
       processData x y z 
-         | length y > 30000 = do 
+         | length y > 100000 = do 
              putStrLn $ "Database Checkpoint"
-             saveNodes dbconnection dbname y 
+             -- forkIO $ R.saveNodes' "127.0.01" 7721 y
+             MDB.saveNodes dbconnection dbname y 
              processData x [] z
       processData (x:xs) y count = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)

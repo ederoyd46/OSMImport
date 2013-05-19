@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>uk.co.ederoyd.osmimport.db</string>
+    <string>uk.co.ederoyd.osmimport.mongodb</string>
     <key>ProgramArguments</key>
     <array>
         <string>MONGO_BIN/mongod</string>
