@@ -88,10 +88,10 @@ performImport fileName dbconnection dbname = do
             let eitherDataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
             case eitherDataBlock of
               Left msg -> do
-                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node"
+                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node: " ++ msg
                 processData xs y (count + 1)
               Right dataBlock -> do
-                let stringTable = Prelude.map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
+                let stringTable = map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
                 let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
                 let pg = getField $ pb_primitivegroup dataBlock
                 nodes <- primitiveGroups pg [] stringTable granularity
@@ -104,8 +104,11 @@ performImport fileName dbconnection dbname = do
       primitiveGroups [] y _ _ = return y
       primitiveGroups (x:xs) y stringTable granularity = do 
         let s = getField $ pg_dense x
-        let impNodes = denseNodes (fromJust s)
-        primitiveGroups xs (y ++ impNodes) stringTable granularity
+        case s of
+          Just nodes -> do
+            let impNodes = denseNodes (fromJust s)
+            primitiveGroups xs (y ++ impNodes) stringTable granularity
+          Nothing -> primitiveGroups xs y stringTable granularity
         where
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 

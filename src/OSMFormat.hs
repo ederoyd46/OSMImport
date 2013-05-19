@@ -107,8 +107,29 @@ module OSMFormat where
   instance Encode DenseNodes
   instance Decode DenseNodes
 
+  data Way = Way
+    { way_id :: Required D1 (Value Int64)
+    -- , way_keys :: Packed D2 (Value Int32) -- [packed = true];
+    -- , way_vals :: Packed D3 (Value Int32) -- [packed = true];
+    , way_info :: Optional D4 (Message Info)
+    , way_refs :: Packed D8 (Value (Signed Int64)) -- [packed = true];  // DELTA coded
+    } deriving (Generic, Show)
 
--- Unused ----------------------------------------------------------------------
+  instance Encode Way
+  instance Decode Way
+
+  data Relation = Relation 
+    { relation_id :: Required D1 (Value Int64)
+    -- , relation_keys :: Packed D2 (Value Int32) -- [packed = true];
+    -- , relation_vals :: Packed D3 (Value Int32) -- [packed = true];
+    , relation_info :: Optional D4 (Message Info)
+    , relation_roles_sid :: Packed D8 (Value Int32) -- [packed = true];
+    , relation_memids :: Packed D9 (Value (Signed Int64)) -- [packed = true];
+    } deriving (Generic, Show)
+  -- //Need to add member types
+  instance Encode Relation
+  instance Decode Relation
+
   --  Optional metadata that may be included into each primitive.
   data Info = Info
     { info_version :: Optional D1 (Value Int32)
@@ -120,6 +141,20 @@ module OSMFormat where
 
   instance Encode Info
   instance Decode Info
+
+-- Unused
+
+  data Node = Node
+    { node_id :: Required D1 (Value (Signed Int64))
+    , node_keys :: Packed D2 (Value Int32) -- [packed = true]; // String IDs.
+    , node_vals :: Packed D3 (Value Int32) -- [packed = true]; // String IDs.
+    , node_info :: Optional D4 (Message Info)
+    , node_lat :: Required D8 (Value Int64)
+    , node_lon :: Required D9 (Value Int64)
+    } deriving (Generic, Show)
+
+  instance Encode Node
+  instance Decode Node
 
 -- // TODO: REMOVE THIS? NOT in osmosis schema.
   data ChangeSet = ChangeSet
@@ -137,41 +172,5 @@ module OSMFormat where
   instance Encode ChangeSet
   instance Decode ChangeSet
 
-  data Node = Node
-    { node_id :: Required D1 (Value (Signed Int64))
-    , node_keys :: Packed D2 (Value Int32) -- [packed = true]; // String IDs.
-    , node_vals :: Packed D3 (Value Int32) -- [packed = true]; // String IDs.
-    , node_info :: Optional D4 (Message Info)
-    , node_lat :: Required D8 (Value Int64)
-    , node_lon :: Required D9 (Value Int64)
-    } deriving (Generic, Show)
 
-  instance Encode Node
-  instance Decode Node
-
-  data Way = Way
-    { way_id :: Required D1 (Value Int64)
-    , way_keys :: Repeated D2 (Value Int32) -- [packed = true];
-    , way_vals :: Repeated D3 (Value Int32) -- [packed = true];
-    , way_info :: Optional D4 (Message Info)
-    , way_refs :: Repeated D8 (Value Int64) -- [packed = true];  // DELTA coded
-    } deriving (Generic, Show)
-
-  instance Encode Way
-  instance Decode Way
-
-  data Relation = Relation 
-    { relation_id :: Required D1 (Value Int64)
-    , relation_keys :: Repeated D2 (Value Int32) -- [packed = true];
-    , relation_vals :: Repeated D3 (Value Int32) -- [packed = true];
-    , relation_info :: Optional D4 (Message Info)
-    , relation_rols :: Repeated D8 (Value Int32) -- [packed = true];
-    , relation_memids :: Repeated D9 (Value Int64) -- [packed = true];
-    } deriving (Generic, Show)
-  -- //Need to add member types
-  instance Encode Relation
-  instance Decode Relation
-  
-  
-  
   

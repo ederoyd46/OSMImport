@@ -9,6 +9,7 @@ Current Status
 --------------
 
 0.1.0.0 - Initial version, imports (some) node data only. Lots of work to do :)
+0.2.0.0 - Added missing node data, now commits to MongoDB in larger batches.
 
 
 Installation Instructions
@@ -49,7 +50,7 @@ OSMImport '127.0.0.1:7720' 'geo_data' 'england-latest.osm.pbf'
 Known Issues
 ------------
 
-1. Currently the import is a slow process. One blob is imported at a time (usually 8000 nodes a blob) on a single thread. This issue will be addressed soon.
+1. Currently one blob is imported at a time (usually 8000 nodes a blob) on a single thread.
 2. I'm a Haskell newbie, so I appreciate the code will be bad....I'm working on it :)
 
 
