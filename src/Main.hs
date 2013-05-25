@@ -63,12 +63,12 @@ performImport fileName dbconnection dbname = do
       processData [] [] _ = return ()
       processData [] y _ = do 
         putStrLn $ "Final Database Checkpoint"
-        -- R.saveNodes' "127.0.01" 7721 y
+        -- R.saveNodes "127.0.01" 7721 y
         MDB.saveNodes dbconnection dbname y 
       processData x y z 
-         | length y > 100000 = do 
+         | length y > 20000 = do 
              putStrLn $ "Database Checkpoint"
-             -- forkIO $ R.saveNodes' "127.0.01" 7721 y
+             -- R.saveNodes "127.0.01" 7721 y
              MDB.saveNodes dbconnection dbname y 
              processData x [] z
       processData (x:xs) y count = do
