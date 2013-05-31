@@ -20,34 +20,6 @@ function init() {
     fi
 }
 
-function installGHC() {
-    ghc_src=$platform_src/ghc
-    if [ ! -d "$ghc" ]; then
-        echo Install GHC
-        rm -rf $ghc_src
-        if [ "$uname" == 'Darwin' ]; then
-            if [ ! -f "$download/ghc-$ghc_version-x86_64-apple-darwin.tar.bz2" ]; then
-                cd $download
-                curl -C - -O http://www.haskell.org/ghc/dist/$ghc_version/ghc-$ghc_version-x86_64-apple-darwin.tar.bz2
-            fi
-            mkdir -p $ghc_src; cd $ghc_src
-            tar jxf $download/ghc-$ghc_version-x86_64-apple-darwin.tar.bz2
-        else
-            if [ ! -f "$download/ghc-$ghc_version-x86_64-unknown-linux.tar.bz2" ]; then
-                cd $download
-                curl -C - -O http://www.haskell.org/ghc/dist/$ghc_version/ghc-$ghc_version-x86_64-unknown-linux.tar.bz2
-            fi
-            mkdir -p $ghc_src; cd $ghc_src
-            tar jxf $download/ghc-$ghc_version-x86_64-unknown-linux.tar.bz2
-        fi
-
-        cd ghc-$ghc_version
-        ./configure --prefix=$ghc
-        make install
-        echo Done
-    fi
-}
-
 function installMongo() {
     mongo_src=$platform_src/mongo
     if [ ! -d "$mongo_install" ]; then    
@@ -119,7 +91,6 @@ function generateServices() {
 }
 
 init 
-installGHC
 installMongo
 installRedis
 generateServices

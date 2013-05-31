@@ -9,7 +9,7 @@ default: install
 
 #Default
 install: 
-	cabal install --with-compiler=$(GHC) 
+	cabal install
 
 #Initialise target directories
 sandbox-init:

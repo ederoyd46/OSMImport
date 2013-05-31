@@ -14,11 +14,6 @@ process_owner=`whoami`
 haskell_install=$platform/osmimport
 haskell_bin=$haskell_install/bin
 
-#ghc
-ghc=$platform/ghc
-ghc_version=7.6.3
-ghc_bin=$ghc/bin
-
 #MongoDB
 mongo_install=$platform/mongo
 mongo_data=$platform/data/mongo
@@ -33,5 +28,5 @@ redis_bin=$redis
 redis_port=7721
 redis_data=$platform/data/redis
 
-export PATH=$haskell_bin:$ghc_bin:$mongo_bin:$redis_bin:$PATH
+export PATH=$haskell_bin:$mongo_bin:$redis_bin:$PATH
 

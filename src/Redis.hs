@@ -29,9 +29,7 @@ module Redis where
       select redisNodes
       forM_ nodes $ \i -> do
         created <- hmset (parse $ _id i) (buildHash i)
-        return()
-      return()
-    return()
+        return ()
     where 
       parse a = pack (show a)
       

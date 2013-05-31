@@ -145,7 +145,7 @@ performImport fileName dbconnection dbname = do
             buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers []
 
           buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode] -> [ImportNode]
-          buildNodes [] [] [] [] [] [] [] [] [] []= []
+          buildNodes [] [] [] [] [] [] [] [] [] [] = []
           buildNodes [] [] [] [] [] [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] nodes = do
             let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), version=Nothing, timestamp=Nothing, changeset=Nothing, uid=Nothing, sid=Nothing}
