@@ -12,5 +12,5 @@ cabal update
 #cabal install cabal-install
 cabal install hello
 cabal install hasktags
-
+cabal install happy
 
