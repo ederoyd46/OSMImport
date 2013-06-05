@@ -13,4 +13,4 @@ cabal update
 cabal install hello
 cabal install hasktags
 cabal install happy
-
+cabal install alex
