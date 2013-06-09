@@ -17,20 +17,33 @@ import System.IO
 import System.Environment
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Char8 as BCE
+import Data.String.Utils
+
+showUsage = do
+      hPutStrLn stderr "usage: dbconnection dbname filename"
+      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'"
+      hPutStrLn stderr "example: OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'"
+      exitFailure
 
 main :: IO ()
 main =  do 
   args <- getArgs
-  when (length args < 3) $ do
-      hPutStrLn stderr "usage: dbconnection dbname filename"
-      hPutStrLn stderr "example: OSMImport '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'"
-      exitFailure
+  when (length args < 4) $ showUsage
   
-  let dbconnection = args !! 0
-  let dbname = args !! 1
-  let filename = args !! 2
+  let dbtype = args !! 0
+  let dbconnection = args !! 1
+  let dbname = args !! 2
+  let filename = args !! 3
   
-  performImport filename dbconnection dbname
+  let host = (split ":" dbconnection) !! 0
+  let port = read ((split ":" dbconnection) !! 1) :: Int
+  
+  let dbcommand recs = case dbtype of
+                          "mongo" -> MDB.saveNodes dbconnection dbname recs
+                          "redis" -> R.saveNodes host port (read dbname :: Int) recs
+                          _ -> showUsage
+                          
+  performImport filename dbcommand
   return ()
 
 data Chunk = Chunk {
@@ -51,8 +64,8 @@ getChunks limit location chunks
     getChunks limit location ((Chunk blobHeader blob) : chunks)
   | otherwise = return $ reverse chunks
 
-performImport :: FilePath -> [Char] -> [Char] -> IO ()
-performImport fileName dbconnection dbname = do
+-- performImport :: FilePath -> [Char] -> [Char] -> IO ()
+performImport fileName dbcommand = do
   handle <- BS.readFile fileName
   let fileLength = fromIntegral $ BS.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
@@ -63,13 +76,11 @@ performImport fileName dbconnection dbname = do
       processData [] [] _ = return ()
       processData [] y _ = do 
         putStrLn $ "Final Database Checkpoint"
-        -- R.saveNodes "127.0.01" 7721 y
-        MDB.saveNodes dbconnection dbname y 
+        dbcommand y 
       processData x y z 
          | length y > 20000 = do 
              putStrLn $ "Database Checkpoint"
-             -- R.saveNodes "127.0.01" 7721 y
-             MDB.saveNodes dbconnection dbname y 
+             dbcommand y 
              processData x [] z
       processData (x:xs) y count = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)

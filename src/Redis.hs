@@ -7,9 +7,6 @@ module Redis where
   import Data.Maybe(fromMaybe)
   import Control.Monad (forM_)
   
-  redisNodes :: Integer
-  redisNodes = 1
-  
   connectRedis :: String -> Int -> IO Connection
   connectRedis hostname port = do 
     conn <- connect info 
@@ -22,11 +19,11 @@ module Redis where
                       , connectMaxIdleTime    = 30
                       }
   
-  saveNodes :: String -> Int -> [ImportNode] -> IO ()
-  saveNodes hostname port nodes = do
+  saveNodes :: String -> Int -> Int -> [ImportNode] -> IO ()
+  saveNodes hostname port dbname nodes = do
     conn <- connectRedis hostname port
     runRedis conn $ do
-      select redisNodes
+      select $ fromIntegral dbname
       forM_ nodes $ \i -> do
         created <- hmset (parse $ _id i) (buildHash i)
         return ()
