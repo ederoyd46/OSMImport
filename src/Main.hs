@@ -17,7 +17,7 @@ import System.IO
 import System.Environment
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.ByteString.Char8 as BCE
-import Data.String.Utils
+import Data.List.Split
 
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
@@ -35,8 +35,8 @@ main =  do
   let dbname = args !! 2
   let filename = args !! 3
   
-  let host = (split ":" dbconnection) !! 0
-  let port = read ((split ":" dbconnection) !! 1) :: Int
+  let host = (splitOn ":" dbconnection) !! 0
+  let port = read ((splitOn ":" dbconnection) !! 1) :: Int
   
   let dbcommand recs = case dbtype of
                           "mongo" -> MDB.saveNodes dbconnection dbname recs
@@ -64,7 +64,7 @@ getChunks limit location chunks
     getChunks limit location ((Chunk blobHeader blob) : chunks)
   | otherwise = return $ reverse chunks
 
--- performImport :: FilePath -> [Char] -> [Char] -> IO ()
+-- performImport :: FilePath -> [Char] -> IO ()
 performImport fileName dbcommand = do
   handle <- BS.readFile fileName
   let fileLength = fromIntegral $ BS.length handle
