@@ -55,16 +55,16 @@ getChunks :: Integral a => a -> a -> [Chunk] -> Get [Chunk]
 getChunks limit location chunks
   | limit > location = do
     len <- getWord32be
-    headerBytes <- getBytes (fromIntegral len)
+    headerBytes <- getByteString (fromIntegral len)
     let Right blobHeader = S.runGet decodeMessage =<< Right headerBytes :: Either String BlobHeader
-    blobData <- getBytes (fromIntegral $ (getField $ bh_datasize blobHeader) :: Int)
+    blobData <- getByteString (fromIntegral $ (getField $ bh_datasize blobHeader) :: Int)
     let Right blob = S.runGet decodeMessage =<< Right blobData :: Either String Blob
     bytesRead <- bytesRead
     let location = fromIntegral bytesRead
     getChunks limit location ((Chunk blobHeader blob) : chunks)
   | otherwise = return $ reverse chunks
 
--- performImport :: FilePath -> [Char] -> IO ()
+performImport :: FilePath -> ([ImportNode] -> IO ()) -> IO ()
 performImport fileName dbcommand = do
   handle <- BS.readFile fileName
   let fileLength = fromIntegral $ BS.length handle
