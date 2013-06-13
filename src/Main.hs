@@ -78,7 +78,7 @@ performImport fileName dbcommand = do
         putStrLn $ "Final Database Checkpoint"
         dbcommand y 
       processData x y z 
-         | length y > 20000 = do 
+         | length y > 50000 = do 
              putStrLn $ "Database Checkpoint"
              dbcommand y 
              processData x [] z
