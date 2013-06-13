@@ -30,4 +30,4 @@ clean:
 	@rm -rf dist
 
 ghci:
-	ghci -no-user-package-db -package-db $(CABAL_SANDBOX)/x86_64-osx-ghc-7.6.3-packages.conf.d
+	cd src && ghci -no-user-package-db -package-db $(CABAL_SANDBOX)/x86_64-osx-ghc-7.6.3-packages.conf.d Main
