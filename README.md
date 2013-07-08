@@ -9,8 +9,10 @@ Current Status
 --------------
 
 0.1.0.0 - Initial version, imports (some) node data only. Lots of work to do :)
+
 0.2.0.0 - Added missing node data, now commits to MongoDB in larger batches.
 
+0.3.0.0 - Added support to import into redis, lots of performance improvements.
 
 Installation Instructions
 -------------------------
@@ -35,8 +37,9 @@ Yes this has been written on a MAC! Although most scripts will just work with Li
 Usage
 -----
 
-Three options are needed to start the import process
+Four options are needed to start the import process
 
+1. dbtype - database type to import into (either mongo or redis)
 1. dbconnection - the host and port the database is running on (authentication is currently not supported).
 2. dbname - the name of the database you want to import into.
 3. filename - the name of the file to import.
@@ -44,11 +47,9 @@ Three options are needed to start the import process
 
 [EXAMPLE]
 
-OSMImport mongo '127.0.0.1:7720' 'geo_data' 'england-latest.osm.pbf'
-
+OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
+OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'
 
 Notes
 -----
-
-I'm currently using a newer GHC than the Haskell-Platform project uses. Although I haven't used anything yet, moving forward I want take advantage of some of the new features.
 
