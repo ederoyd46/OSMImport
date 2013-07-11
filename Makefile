@@ -29,5 +29,6 @@ clean:
 	@rm -rf dist/*
 	@rm -rf dist
 
+#Only use for sandboxed ghci...currently set up for OSX (need a more generic way of doing this)
 ghci:
 	cd src && ghci -no-user-package-db -package-db $(CABAL_SANDBOX)/x86_64-osx-ghc-7.6.3-packages.conf.d Main

@@ -25,3 +25,4 @@ module Common where
 
   nano :: Float
   nano = 1000000000
+
