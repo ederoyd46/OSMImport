@@ -78,7 +78,7 @@ module OSMFormat where
     , pg_dense :: Optional D2 (Message DenseNodes)
 --    , pg_ways :: Repeated D3 (Message Way)
 --    , pg_relations :: Repeated D4 (Message Relation)
-    , pg_change_sets :: Repeated D5 (Message ChangeSet)
+--    , pg_change_sets :: Repeated D5 (Message ChangeSet)
     } deriving (Generic, Show)
     
   instance Encode PrimitiveGroup
