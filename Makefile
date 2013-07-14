@@ -20,12 +20,13 @@ docs:
 	cabal haddock --executables --hyperlink-sources
 
 tags:
-	hasktags -c src/
+	@hasktags -c src/
 
 cleanMacFiles:
 	find . -name '._*' -exec rm {} \;
 
 clean:
+	@rm tags
 	@rm -rf dist/*
 	@rm -rf dist
 

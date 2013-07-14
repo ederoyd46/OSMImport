@@ -14,6 +14,8 @@ Current Status
 
 0.3.0.0 - Added support to import into redis, lots of performance improvements.
 
+0.4.0.0 - Changed to use multiple threads. Moved a bulk of the logic into it's own module
+
 Installation Instructions
 -------------------------
 
