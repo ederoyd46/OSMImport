@@ -76,8 +76,8 @@ module OSMFormat where
   data PrimitiveGroup = PrimitiveGroup
     { pg_nodes :: Repeated D1 (Message Node)
     , pg_dense :: Optional D2 (Message DenseNodes)
-    , pg_ways :: Repeated D3 (Message Way)
-    , pg_relations :: Repeated D4 (Message Relation)
+--    , pg_ways :: Repeated D3 (Message Way)
+--    , pg_relations :: Repeated D4 (Message Relation)
     , pg_change_sets :: Repeated D5 (Message ChangeSet)
     } deriving (Generic, Show)
     
@@ -107,29 +107,6 @@ module OSMFormat where
   instance Encode DenseNodes
   instance Decode DenseNodes
 
-  data Way = Way
-    { way_id :: Required D1 (Value Int64)
-    -- , way_keys :: Packed D2 (Value Int32) -- [packed = true];
-    -- , way_vals :: Packed D3 (Value Int32) -- [packed = true];
-    , way_info :: Optional D4 (Message Info)
-    , way_refs :: Packed D8 (Value (Signed Int64)) -- [packed = true];  // DELTA coded
-    } deriving (Generic, Show)
-
-  instance Encode Way
-  instance Decode Way
-
-  data Relation = Relation 
-    { relation_id :: Required D1 (Value Int64)
-    -- , relation_keys :: Packed D2 (Value Int32) -- [packed = true];
-    -- , relation_vals :: Packed D3 (Value Int32) -- [packed = true];
-    , relation_info :: Optional D4 (Message Info)
-    , relation_roles_sid :: Packed D8 (Value Int32) -- [packed = true];
-    , relation_memids :: Packed D9 (Value (Signed Int64)) -- [packed = true];
-    } deriving (Generic, Show)
-  -- //Need to add member types
-  instance Encode Relation
-  instance Decode Relation
-
   --  Optional metadata that may be included into each primitive.
   data Info = Info
     { info_version :: Optional D1 (Value Int32)
@@ -141,6 +118,34 @@ module OSMFormat where
 
   instance Encode Info
   instance Decode Info
+
+-- Doesn't decompile properly, the uint32 type mostly fails with an error
+  data Way = Way
+    { way_id :: Required D1 (Value Int64)
+    -- , way_keys :: Packed D2 (Value Int32) -- [packed = true];
+    -- , way_vals :: Packed D3 (Value Int32) -- [packed = true];
+--     , way_keys :: Packed D2 (Value (Fixed Word32)) -- [packed = true];
+--     , way_vals :: Packed D3 (Value (Fixed Word32)) -- [packed = true];
+     , way_info :: Optional D4 (Message Info)
+    , way_refs :: Packed D8 (Value (Signed Int64)) -- [packed = true];  // DELTA coded
+    } deriving (Generic, Show)
+
+  instance Encode Way
+  instance Decode Way
+
+  data Relation = Relation 
+    { relation_id :: Required D1 (Value Int64)
+--    , relation_keys :: Packed D2 (Value Word32) -- [packed = true];
+    --, relation_vals :: Packed D3 (Maybe (Value Word32)) -- [packed = true];
+    -- , relation_keys :: Packed D2 (Value Int32) -- [packed = true];
+    -- , relation_vals :: Packed D3 (Value Int32) -- [packed = true];
+    , relation_info :: Optional D4 (Message Info)
+    , relation_roles_sid :: Packed D8 (Value Int32) -- [packed = true];
+    , relation_memids :: Packed D9 (Value (Signed Int64)) -- [packed = true];
+    } deriving (Generic, Show)
+  -- //Need to add member types
+  instance Encode Relation
+  instance Decode Relation
 
 -- Unused
 

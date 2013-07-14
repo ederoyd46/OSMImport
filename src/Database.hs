@@ -16,7 +16,7 @@ module Database where
   saveNodes dbconnection dbname nodes = do 
     let insertNodes = insertMany "node" (parseNodes nodes [])
     runDBCommand dbconnection dbname insertNodes
-    
+
     where
       parseNodes [] [] = []
       parseNodes [] y = reverse y
@@ -33,7 +33,7 @@ module Database where
                        ]
         parseNodes xs (buildDoc : y)
 
-      
+
       parseTags [] [] = []
       parseTags [] y = reverse y
       parseTags (x:xs) y =

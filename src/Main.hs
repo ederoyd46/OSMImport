@@ -62,6 +62,7 @@ getChunks limit location chunks
     bytesRead <- bytesRead
     let location = fromIntegral bytesRead
     getChunks limit location ((Chunk blobHeader blob) : chunks)
+--  | otherwise = return $ chunks
   | otherwise = return $ reverse chunks
 
 performImport :: FilePath -> ([ImportNode] -> IO ()) -> IO ()
