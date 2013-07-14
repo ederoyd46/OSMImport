@@ -6,8 +6,8 @@ import qualified Database as MDB
 import qualified Redis as R
 import qualified Data.Serialize as S
 import Data.ProtocolBuffers
-import Control.Concurrent (forkIO)
-import Control.Monad(when)
+import Control.Concurrent (forkIO, MVar, newEmptyMVar, takeMVar, putMVar)
+import Control.Monad(when, forever)
 import GHC.Generics (Generic)
 import Data.Maybe(fromJust, isJust, isNothing)
 import Data.Binary.Get
@@ -34,16 +34,7 @@ main =  do
   let dbconnection = args !! 1
   let dbname = args !! 2
   let filename = args !! 3
-  
-  let host = (splitOn ":" dbconnection) !! 0
-  let port = read ((splitOn ":" dbconnection) !! 1) :: Int
-  
-  let dbcommand recs = case dbtype of
-                          "mongo" -> MDB.saveNodes dbconnection dbname recs
-                          "redis" -> R.saveNodes host port (read dbname :: Int) recs
-                          _ -> showUsage
-                          
-  performImport filename dbcommand
+  startImport dbtype dbconnection dbname filename
   return ()
 
 data Chunk = Chunk {
@@ -62,28 +53,47 @@ getChunks limit location chunks
     bytesRead <- bytesRead
     let location = fromIntegral bytesRead
     getChunks limit location ((Chunk blobHeader blob) : chunks)
---  | otherwise = return $ chunks
   | otherwise = return $ reverse chunks
+
+startImport :: String -> String -> String -> String -> IO ()
+startImport dbtype dbconnection dbname filename = do
+  let host = (splitOn ":" dbconnection) !! 0
+  let port = read ((splitOn ":" dbconnection) !! 1) :: Int
+  
+  let dbcommand recs = case dbtype of
+                          "mongo" -> MDB.saveNodes dbconnection dbname recs
+                          "redis" -> R.saveNodes host port (read dbname :: Int) recs
+                          _ -> showUsage
+                          
+  performImport filename dbcommand
+  return ()
 
 performImport :: FilePath -> ([ImportNode] -> IO ()) -> IO ()
 performImport fileName dbcommand = do
+  dbMVar <- newEmptyMVar
+  forkIO $ forkedDBCommand dbMVar
   handle <- BS.readFile fileName
   let fileLength = fromIntegral $ BS.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-
-  processData chunks [] 1
+  processData chunks [] 1 dbMVar
     where
-      processData [] [] _ = return ()
-      processData [] y _ = do 
+      forkedDBCommand dbMVar = do
+        forever $ do
+          recs <- takeMVar dbMVar
+          putStrLn "Running command in seperate thread"
+          dbcommand recs
+
+      processData [] [] _ _ = return ()
+      processData [] y _ dbMVar = do 
         putStrLn $ "Final Database Checkpoint"
-        dbcommand y 
-      processData x y z 
+        putMVar dbMVar y
+      processData x y z dbMVar 
          | length y > 50000 = do 
              putStrLn $ "Database Checkpoint"
-             dbcommand y 
-             processData x [] z
-      processData (x:xs) y count = do
+             putMVar dbMVar y
+             processData x [] z dbMVar
+      processData (x:xs) y count dbMVar = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
         let blobUncompressed = decompress . BS.fromChunks $ [blobCompressed]
         let btype = getField $ bh_type (blob_header x)
@@ -98,20 +108,20 @@ performImport fileName dbcommand = do
             let maxlon = (fromIntegral $ getField $ hbbox_right bbox) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
-            processData xs y (count + 1)
+            processData xs y (count + 1) dbMVar
           "OSMData" -> do
             let eitherDataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
             case eitherDataBlock of
               Left msg -> do
                 putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node: " ++ msg
-                processData xs y (count + 1)
+                processData xs y (count + 1) dbMVar
               Right dataBlock -> do
                 let stringTable = map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
                 let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
                 let pg = getField $ pb_primitivegroup dataBlock
                 nodes <- primitiveGroups pg [] stringTable granularity
                 putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show (length nodes)) ++ "]"
-                processData xs (y ++ nodes) (count + 1)
+                processData xs (y ++ nodes) (count + 1) dbMVar
 
       -- Primitive Groups
       primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Integer -> IO [ImportNode]
@@ -185,10 +195,5 @@ performImport fileName dbcommand = do
             | x == 0 = (y, (xx : xs))
             | otherwise = splitKeyVal xs (ImportTag (stringTable !! (fromIntegral x :: Int)) (stringTable !! (fromIntegral xx :: Int)) : y)
           splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
-
-
-
-
-
-
-
+          
+          
