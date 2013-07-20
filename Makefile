@@ -8,7 +8,7 @@ HGEOCODER_BIN=$(BASE_DIR)/platform/osmimport/bin/OSMImport
 default: install
 
 #Default
-install: 
+install: tags
 	cabal install
 
 #Initialise target directories

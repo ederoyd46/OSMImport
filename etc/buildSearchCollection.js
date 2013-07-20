@@ -88,24 +88,24 @@ osmAmenity.forEach(function(row) {
 });
 
 
-// print("Dropping Existing Search Terms");
-// db.Location.drop();
-// 
-// print("Building PostalCode Terms");
-// print("We store location as longitude and latitude for the geo spatial index");
-// var postalCodes = db.PostalCode.find();
-// postalCodes.forEach(function(r) {
-//   var original = r.postalCode;
-//   var term = parseTerm(original);
-//   var newRecord = { searchTerm: [term]
-//                   , latitude: r.latitude
-//                   , longitude: r.longitude
-//                   , location: { lon : r.longitude, lat : r.latitude }
-//                   , rank: 10
-//                   , source: "GEONAMES-POSTCODE"
-//                   };
-//   db.Location.save(newRecord);
-// });
+print("Dropping Existing Search Terms");
+db.Location.drop();
+
+print("Building PostalCode Terms");
+print("We store location as longitude and latitude for the geo spatial index");
+var postalCodes = db.PostalCode.find();
+postalCodes.forEach(function(r) {
+  var original = r.postalCode;
+  var term = parseTerm(original);
+  var newRecord = { searchTerm: [term]
+                  , latitude: r.latitude
+                  , longitude: r.longitude
+                  , location: { lon : r.longitude, lat : r.latitude }
+                  , rank: 10
+                  , source: "GEONAMES-POSTCODE"
+                  };
+  db.Location.save(newRecord);
+});
 
 print("Building Streetmap Place Terms Based on Places and Amenities");
 print("We store location as longitude and latitude for the geo spatial index");

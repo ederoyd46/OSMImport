@@ -71,17 +71,15 @@ performImport fileName dbcommand = do
       forkedDBCommand dbMVar = do
         forever $ do
           recs <- takeMVar dbMVar
-          putStrLn "Running command in seperate thread"
-          dbcommand recs
+          forkIO $ dbcommand recs
 
       processData [] [] _ _ = return ()
       processData [] y _ dbMVar = do 
         putStrLn $ "Final Database Checkpoint"
         putMVar dbMVar y
       processData x y z dbMVar 
-         | length y > 50000 = do 
-             putStrLn $ "Database Checkpoint"
-             putMVar dbMVar y
+         | length y > 7999 = do 
+             forkIO $ putMVar dbMVar y
              processData x [] z dbMVar
       processData (x:xs) y count dbMVar = do
         let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
