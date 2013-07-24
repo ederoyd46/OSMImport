@@ -2,7 +2,6 @@
 
 module Importer where
 
-import OSMFormat
 import Common
 import qualified Database as MDB
 import qualified Redis as R
@@ -10,16 +9,43 @@ import qualified Data.Serialize as S
 import Data.ProtocolBuffers
 import Control.Concurrent (forkIO, MVar, newEmptyMVar, takeMVar, putMVar)
 import Control.Monad(when, forever)
+import Control.Monad.State(liftIO)
 import GHC.Generics (Generic)
 import Data.Maybe(fromJust, isJust, isNothing)
-import Data.Binary.Get
+import Data.Binary.Get(Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib
 import System.Exit
 import System.IO
 import System.Environment
-import qualified Data.ByteString.Lazy as BS
-import qualified Data.ByteString.Char8 as BCE
+import qualified Data.ByteString.Lazy as BLAZY
 import Data.List.Split
+
+import Text.ProtocolBuffers(messageGet,utf8,isSet,getVal)
+import Text.DescriptorProtos.FileDescriptorProto
+import OSM.FileFormat.Blob
+import OSM.FileFormat.BlockHeader
+
+import OSM.OSMFormat.HeaderBlock 
+import OSM.OSMFormat.PrimitiveBlock
+import OSM.OSMFormat.HeaderBBox
+
+import OSM.OSMFormat.StringTable
+{-import OSM.OSMFormat.ChangeSet-}
+import OSM.OSMFormat.DenseInfo
+import OSM.OSMFormat.DenseNodes
+{-import OSM.OSMFormat.Info-}
+{-import OSM.OSMFormat.Node-}
+import OSM.OSMFormat.PrimitiveGroup
+
+{-import OSM.OSMFormat.Way-}
+
+{-import OSM.OSMFormat.Relation-}
+{-import OSM.OSMFormat.Relation.MemberType-}
+
+import Text.ProtocolBuffers.Basic
+
+import qualified Data.Foldable as F(forM_,toList)
+import qualified Data.ByteString.Lazy.UTF8 as U(toString)
 
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
@@ -28,22 +54,23 @@ showUsage = do
       exitFailure
 
 data Chunk = Chunk {
-    blob_header :: BlobHeader,
-    blob :: Blob
+    blob_header :: BlockHeader
+  , blob :: Blob
 } deriving (Show)
 
 getChunks :: Integral a => a -> a -> [Chunk] -> Get [Chunk]
 getChunks limit location chunks
   | limit > location = do
     len <- getWord32be
-    headerBytes <- getByteString (fromIntegral len)
-    let Right blobHeader = S.runGet decodeMessage =<< Right headerBytes :: Either String BlobHeader
-    blobData <- getByteString (fromIntegral $ (getField $ bh_datasize blobHeader) :: Int)
-    let Right blob = S.runGet decodeMessage =<< Right blobData :: Either String Blob
+    headerBytes <- getLazyByteString (fromIntegral len)
+    let Right (blobHeader,_) = messageGet headerBytes ::  Either String (BlockHeader, ByteString)
+    blobData <- getLazyByteString $ fromIntegral $ getVal blobHeader datasize
+    let Right (blob,_) = messageGet blobData :: Either String (Blob, ByteString)
     bytesRead <- bytesRead
     let location = fromIntegral bytesRead
     getChunks limit location ((Chunk blobHeader blob) : chunks)
   | otherwise = return $ reverse chunks
+  {-| otherwise = return $ [(reverse chunks) !! 1] --920-}
 
 startImport :: String -> String -> String -> String -> IO ()
 startImport dbtype dbconnection dbname filename = do
@@ -62,8 +89,8 @@ performImport :: FilePath -> ([ImportNode] -> IO ()) -> IO ()
 performImport fileName dbcommand = do
   dbMVar <- newEmptyMVar
   forkIO $ forkedDBCommand dbMVar
-  handle <- BS.readFile fileName
-  let fileLength = fromIntegral $ BS.length handle
+  handle <- BLAZY.readFile fileName
+  let fileLength = fromIntegral $ BLAZY.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
   processData chunks [] 1 dbMVar
@@ -71,7 +98,7 @@ performImport fileName dbcommand = do
       forkedDBCommand dbMVar = do
         forever $ do
           recs <- takeMVar dbMVar
-          forkIO $ dbcommand recs
+          dbcommand recs
 
       processData [] [] _ _ = return ()
       processData [] y _ dbMVar = do 
@@ -79,74 +106,65 @@ performImport fileName dbcommand = do
         putMVar dbMVar y
       processData x y z dbMVar 
          | length y > 7999 = do 
-             forkIO $ putMVar dbMVar y
+             putMVar dbMVar y
              processData x [] z dbMVar
       processData (x:xs) y count dbMVar = do
-        let blobCompressed = fromJust $ getField $ b_zlib_data (blob x)
-        let blobUncompressed = decompress . BS.fromChunks $ [blobCompressed]
-        let btype = getField $ bh_type (blob_header x)
-        case btype of
-          "OSMHeader" -> do 
-            let Right headerBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String HeaderBlock
-            -- let features = getField $ hb_required_features headerBlock
-            let bbox = fromJust $ getField $ hb_bbox headerBlock
-            let minlat = (fromIntegral $ getField $ hbbox_bottom bbox) / nano
-            let minlon = (fromIntegral $ getField $ hbbox_left bbox) / nano
-            let maxlat = (fromIntegral $ getField $ hbbox_top bbox) / nano
-            let maxlon = (fromIntegral $ getField $ hbbox_right bbox) / nano
+        let blobUncompressed = decompress $ getVal (blob x) zlib_data
+        let btype = getVal (blob_header x) type'
+        case uToString btype of
+          "OSMHeader" -> do
+            let Right (headerBlock, _) = messageGet blobUncompressed :: Either String (HeaderBlock, BLAZY.ByteString)
+            let b = getVal headerBlock bbox
+            let minlat = (fromIntegral $ getVal b bottom) / nano
+            let minlon = (fromIntegral $ getVal b left) / nano
+            let maxlat = (fromIntegral $ getVal b top) / nano
+            let maxlon = (fromIntegral $ getVal b right) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
             processData xs y (count + 1) dbMVar
           "OSMData" -> do
-            let eitherDataBlock = S.runGetLazy decodeMessage =<< Right blobUncompressed :: Either String PrimitiveBlock
-            case eitherDataBlock of
-              Left msg -> do
-                putStrLn $ "Chunk : [" ++ (show count) ++ "] Not a parsable node: " ++ msg
-                processData xs y (count + 1) dbMVar
-              Right dataBlock -> do
-                let stringTable = map BCE.unpack (getField $ st_bytes (getField $ pb_stringtable dataBlock))
-                let granularity = fromIntegral $ fromJust . getField $ pb_date_granularity dataBlock
-                let pg = getField $ pb_primitivegroup dataBlock
-                nodes <- primitiveGroups pg [] stringTable granularity
-                let nodeCount = length nodes
-                putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show nodeCount) ++ "]"
-                processData xs (y ++ nodes) (count + 1) dbMVar
+            let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BLAZY.ByteString)
+            let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
+            let gran = fromIntegral $ getVal primitiveBlock granularity
+            let pg = F.toList $ getVal primitiveBlock primitivegroup
+            nodes <- primitiveGroups pg [] st gran
+            let nodeCount = length nodes
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show nodeCount) ++ "]"
+            processData xs (y ++ nodes) (count + 1) dbMVar
+
 
       -- Primitive Groups
       primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Integer -> IO [ImportNode]
       primitiveGroups [] [] _ _ = return []
       primitiveGroups [] y _ _ = return y
-      primitiveGroups (x:xs) y stringTable granularity = do 
-        let s = getField $ pg_dense x
-        case s of
-          Just nodes -> do
-            let impNodes = denseNodes (fromJust s)
-            primitiveGroups xs (y ++ impNodes) stringTable granularity
-          Nothing -> primitiveGroups xs y stringTable granularity
+      primitiveGroups (x:xs) y st gran = do 
+        let dnodes = getVal x dense
+        let impNodes = denseNodes dnodes
+        primitiveGroups xs (y ++ impNodes) st gran
+
         where
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 
-            let ids = map fromIntegral (getField $ dense_nodes_id d)
-            let latitudes = map fromIntegral (getField $ dense_nodes_lat d)
-            let longitudes = map fromIntegral (getField $ dense_nodes_lon d)
-            let keyvals = map fromIntegral (getField $ dense_nodes_keys_vals d)
+            let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
+            let latitudes = map fromIntegral $ F.toList (getVal d lat) 
+            let longitudes = map fromIntegral $ F.toList (getVal d lon)
+            let keyvals = map fromIntegral $ F.toList (getVal d keys_vals)
             
-            let maybeInfo = getField $ dense_nodes_info d
-            case maybeInfo of
-              Just info -> do 
-                let versions = map fromIntegral (getField $ dense_info_version info) 
-                let timestamps = map fromIntegral (getField $ dense_info_timestamp info) 
-                let changesets = map fromIntegral (getField $ dense_info_changeset info) 
-                let uids = map fromIntegral (getField $ dense_info_uid info) 
-                let sids = map fromIntegral (getField $ dense_info_user_sid info) 
-                buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
-              Nothing -> buildNodeData ids latitudes longitudes keyvals [] [] [] [] []
+            let info = getVal d denseinfo
+
+            let versions =  map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.version)
+            let timestamps = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp) 
+            let changesets = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.changeset)
+            let uids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.uid)
+            let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
+
+            buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
             let identifiers = deltaDecode ids 0 []
-            let latitudes = calculateDegrees (deltaDecode lat 0 []) [] granularity 
-            let longitudes = calculateDegrees (deltaDecode lon 0 []) [] granularity 
+            let latitudes = calculateDegrees (deltaDecode lat 0 []) [] gran
+            let longitudes = calculateDegrees (deltaDecode lon 0 []) [] gran
             --Need to rename all these
             let decodedTimestamps = deltaDecode timestamps 0 []
             let decodedChangesets = deltaDecode changesets 0 []
@@ -159,13 +177,13 @@ performImport fileName dbcommand = do
           buildNodes [] [] [] [] [] [] [] [] [] [] = []
           buildNodes [] [] [] [] [] [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] nodes = do
-            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), version=Nothing, timestamp=Nothing, changeset=Nothing, uid=Nothing, sid=Nothing}
+            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), Common.version=Nothing, Common.timestamp=Nothing, Common.changeset=Nothing, Common.uid=Nothing, sid=Nothing}
             buildNodes ids lats longs (snd nextKeyVals) [] [] [] [] [] (buildNode : nodes)
             where 
               nextKeyVals = splitKeyVal keyvals []
 
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) nodes = do
-            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), version=(Just ver), timestamp=(Just ts), changeset=(Just cs), uid=(Just uid), sid=(Just (stringTable !! (fromIntegral sid :: Int)))}
+            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), Common.version=(Just ver), Common.timestamp=(Just ts), Common.changeset=(Just cs), Common.uid=(Just uid), sid=(Just (st !! (fromIntegral sid :: Int)))}
             buildNodes ids lats longs (snd nextKeyVals) versions timestamps changesets uids sids (buildNode : nodes)
             where 
               nextKeyVals = splitKeyVal keyvals []
@@ -182,7 +200,7 @@ performImport fileName dbcommand = do
           splitKeyVal [] y = (y, [])
           splitKeyVal (x:xx:xs) y 
             | x == 0 = (y, (xx : xs))
-            | otherwise = splitKeyVal xs (ImportTag (stringTable !! (fromIntegral x :: Int)) (stringTable !! (fromIntegral xx :: Int)) : y)
+            | otherwise = splitKeyVal xs (ImportTag (st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
           splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
           
-          
+         

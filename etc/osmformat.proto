@@ -1,4 +1,5 @@
-option java_package = "crosby.binary";
+option java_package = "OSM.OSMFormat";
+//option java_outer_classname = "OSMFormat";
 
 /* OSM Binary file format 
 
@@ -40,15 +41,28 @@ message HeaderBlock {
   /* Additional tags to aid in parsing this dataset */
   repeated string required_features = 4;
   repeated string optional_features = 5;
-
-  optional string writingprogram = 16; 
+ 
+  optional string writingprogram = 16;
   optional string source = 17; // From the bbox field.
+ 
+  /* Tags that allow continuing an Osmosis replication */
+ 
+  // replication timestamp, expressed in seconds since the epoch,
+  // otherwise the same value as in the "timestamp=..." field
+  // in the state.txt file used by Osmosis
+  optional int64 osmosis_replication_timestamp = 32;
+ 
+  // replication sequence number (sequenceNumber in state.txt)
+  optional int64 osmosis_replication_sequence_number = 33;
+ 
+  // replication base URL (from Osmosis' configuration.txt file)
+  optional string osmosis_replication_base_url = 34;
 }
 
 
+
 /** The bounding box field in the OSM header. BBOX, as used in the OSM
-header. Units are always in nanodegrees -- they do not obey
-granularity rules. */
+header. Units are always in nanodegrees -- they do not obey granularity rules. */
 
 message HeaderBBox {
    required sint64 left = 1;
@@ -146,18 +160,6 @@ message Node {
    required sint64 lat = 8;
    required sint64 lon = 9;
 }
-
-/* Used to densly represent a sequence of nodes that do not have any tags.
-
-We represent these nodes columnwise as five columns: ID's, lats, and
-lons, all delta coded. When metadata is not omitted, 
-
-We encode keys & vals for all nodes as a single array of integers
-containing key-stringid and val-stringid, using a stringid of 0 as a
-delimiter between nodes.
-
-   ( (<keyid> <valid>)* '0' )*
- */
 
 message DenseNodes {
    repeated sint64 id = 1 [packed = true]; // DELTA coded

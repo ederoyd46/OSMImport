@@ -14,3 +14,5 @@ cabal install hello
 cabal install hasktags
 cabal install happy
 cabal install alex
+cabal install hprotoc
+

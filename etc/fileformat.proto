@@ -1,6 +1,5 @@
-option java_package = "crosby.binary";
-//protoc --java_out=../.. fileformat.proto
-
+option java_package = "OSM.FileFormat";
+//option java_outer_classname = "FileFormat";
 
 //
 //  STORAGE LAYER: Storing primitives.

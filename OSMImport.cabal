@@ -29,10 +29,13 @@ Executable OSMImport
     mongoDB == 1.4.0,
     hedis == 0.6.2,
     geohash == 1.0.1,
-    split == 0.2.2
+    split == 0.2.2,
+    protocol-buffers == 2.0.14,
+    protocol-buffers-descriptor == 2.0.14,
+    utf8-string == 0.3.7
 
   -- ghc-options: -threaded -O2 -auto-all -rtsopts -with-rtsopts=-H4096m
-  ghc-options: -O2
+  ghc-options: -O2 -rtsopts -threaded
   
   default-language: Haskell2010
   

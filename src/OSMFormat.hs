@@ -56,7 +56,7 @@ module OSMFormat where
     -- Granularity, units of nanodegrees, used to store coordinates in this block
     , pb_granularity :: Optional D17 (Value Int32) -- [default=100];
      -- Offset value between the output coordinates coordinates and the granularity grid in unites of nanodegrees.
-    , pb_lat_offset :: Optional D19 (Value Int64) -- [default=0];
+    --, pb_lat_offset :: Optional D19 (Value Int64) -- [default=0];
     , pb_lon_offset :: Optional D20 (Value Int64) -- [default=0];
       -- Granularity of dates, normally represented in units of milliseconds since the 1970 epoch.
     , pb_date_granularity :: Optional D18 (Value Int32) -- [default=1000];
@@ -74,8 +74,8 @@ module OSMFormat where
 
 -- // Group of OSMPrimitives. All primitives in a group must be the same type.
   data PrimitiveGroup = PrimitiveGroup
-    { pg_nodes :: Repeated D1 (Message Node)
-    , pg_dense :: Optional D2 (Message DenseNodes)
+    {  pg_dense :: Optional D2 (Message DenseNodes)
+--    , pg_nodes :: Repeated D1 (Message Node)
 --    , pg_ways :: Repeated D3 (Message Way)
 --    , pg_relations :: Repeated D4 (Message Relation)
 --    , pg_change_sets :: Repeated D5 (Message ChangeSet)
