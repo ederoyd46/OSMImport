@@ -6,46 +6,32 @@ import Common
 import qualified Database as MDB
 import qualified Redis as R
 import qualified Data.Serialize as S
-import Data.ProtocolBuffers
 import Control.Concurrent (forkIO, MVar, newEmptyMVar, takeMVar, putMVar)
 import Control.Monad(when, forever)
-import Control.Monad.State(liftIO)
-import GHC.Generics (Generic)
 import Data.Maybe(fromJust, isJust, isNothing)
 import Data.Binary.Get(Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib
 import System.Exit
 import System.IO
-import System.Environment
 import qualified Data.ByteString.Lazy as BLAZY
 import Data.List.Split
 
+import Text.ProtocolBuffers.Basic
+import qualified Data.Foldable as F(forM_,toList)
+import qualified Data.ByteString.Lazy.UTF8 as U(toString)
+
 import Text.ProtocolBuffers(messageGet,utf8,isSet,getVal)
 import Text.DescriptorProtos.FileDescriptorProto
+
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
-
 import OSM.OSMFormat.HeaderBlock 
 import OSM.OSMFormat.PrimitiveBlock
 import OSM.OSMFormat.HeaderBBox
-
 import OSM.OSMFormat.StringTable
-{-import OSM.OSMFormat.ChangeSet-}
 import OSM.OSMFormat.DenseInfo
 import OSM.OSMFormat.DenseNodes
-{-import OSM.OSMFormat.Info-}
-{-import OSM.OSMFormat.Node-}
 import OSM.OSMFormat.PrimitiveGroup
-
-{-import OSM.OSMFormat.Way-}
-
-{-import OSM.OSMFormat.Relation-}
-{-import OSM.OSMFormat.Relation.MemberType-}
-
-import Text.ProtocolBuffers.Basic
-
-import qualified Data.Foldable as F(forM_,toList)
-import qualified Data.ByteString.Lazy.UTF8 as U(toString)
 
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
@@ -70,7 +56,6 @@ getChunks limit location chunks
     let location = fromIntegral bytesRead
     getChunks limit location ((Chunk blobHeader blob) : chunks)
   | otherwise = return $ reverse chunks
-  {-| otherwise = return $ [(reverse chunks) !! 1] --920-}
 
 startImport :: String -> String -> String -> String -> IO ()
 startImport dbtype dbconnection dbname filename = do
