@@ -16,6 +16,8 @@ Current Status
 
 0.4.0.0 - Changed to use multiple threads. Moved a bulk of the logic into it's own module
 
+0.5.0.0 - Reimplemented using alternative procol buffer library due to slow parsing of some records and problems with the sint datatype.
+
 Installation Instructions
 -------------------------
 

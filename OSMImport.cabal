@@ -2,7 +2,7 @@ name:                OSMImport
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.4.0.0
+version:             0.5.0.0
 synopsis:            Application to import the Open Street Map Protocol Buffer format into MongoDB or Redis
 license:             MIT
 license-file:        LICENSE
