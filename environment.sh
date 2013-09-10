@@ -19,11 +19,11 @@ mongo_install=$platform/mongo
 mongo_data=$platform/data/mongo
 mongo_bin=$platform/mongo/bin
 mongo_port=7720
-mongo_version=2.4.3
+mongo_version=2.4.6
 
 #Redis
 redis=$platform/redis
-redis_version=2.6.13
+redis_version=2.6.16
 redis_bin=$redis
 redis_port=7721
 redis_data=$platform/data/redis

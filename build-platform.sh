@@ -61,7 +61,7 @@ function installRedis() {
         
         if [ ! -f "$download/redis-$redis_version.tar.gz" ]; then
           cd $download
-          curl -C - -O http://redis.googlecode.com/files/redis-$redis_version.tar.gz
+          curl -C - -O http://download.redis.io/releases/redis-$redis_version.tar.gz
         fi
 
         mkdir -p $redis_src; cd $redis_src

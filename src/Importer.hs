@@ -162,13 +162,29 @@ performImport fileName dbcommand = do
           buildNodes [] [] [] [] [] [] [] [] [] [] = []
           buildNodes [] [] [] [] [] [] [] [] [] nodes = nodes
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] nodes = do
-            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), Common.version=Nothing, Common.timestamp=Nothing, Common.changeset=Nothing, Common.uid=Nothing, sid=Nothing}
+            let buildNode = ImportNode {_id=id
+                                      , latitude=lat
+                                      , longitude=long
+                                      , tags=(fst nextKeyVals)
+                                      , Common.version=Nothing
+                                      , Common.timestamp=Nothing
+                                      , Common.changeset=Nothing
+                                      , Common.uid=Nothing
+                                      , sid=Nothing}
             buildNodes ids lats longs (snd nextKeyVals) [] [] [] [] [] (buildNode : nodes)
             where 
               nextKeyVals = splitKeyVal keyvals []
 
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) nodes = do
-            let buildNode = ImportNode {_id=id, latitude=lat, longitude=long, tags=(fst nextKeyVals), Common.version=(Just ver), Common.timestamp=(Just ts), Common.changeset=(Just cs), Common.uid=(Just uid), sid=(Just (st !! (fromIntegral sid :: Int)))}
+            let buildNode = ImportNode {_id=id
+                                      , latitude=lat
+                                      , longitude=long
+                                      , tags=(fst nextKeyVals)
+                                      , Common.version=(Just ver)
+                                      , Common.timestamp=(Just ts)
+                                      , Common.changeset=(Just cs)
+                                      , Common.uid=(Just uid)
+                                      , sid=(Just (st !! (fromIntegral sid :: Int)))}
             buildNodes ids lats longs (snd nextKeyVals) versions timestamps changesets uids sids (buildNode : nodes)
             where 
               nextKeyVals = splitKeyVal keyvals []
