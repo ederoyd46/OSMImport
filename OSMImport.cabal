@@ -10,7 +10,7 @@ author:              Matthew Brown
 maintainer:          matt@ederoyd.co.uk
 category:            Database
 build-type:          Simple
-Cabal-version:       >=1.16
+Cabal-version:       >=1.18
 
 Executable OSMImport
     hs-source-dirs: src
@@ -20,7 +20,7 @@ Executable OSMImport
     base >= 4.5.0.0,
     text == 0.11.3.1,
     cereal == 0.3.5.2,
-    bytestring == 0.10.2.0,
+    bytestring == 0.10.0.2,
     binary == 0.7.1.0,
     zlib == 0.5.4.1,
     mtl == 2.1.2,
