@@ -123,8 +123,11 @@ performImport fileName dbcommand = do
       primitiveGroups [] [] _ _ = return []
       primitiveGroups [] y _ _ = return y
       primitiveGroups (x:xs) y st gran = do 
-        let dnodes = getVal x dense
-        let impNodes = denseNodes dnodes
+        let nodes = getVal x dense
+        let ways = getVal x ways
+        let relations = getVal x relations
+
+        let impNodes = denseNodes nodes
         primitiveGroups xs (y ++ impNodes) st gran
 
         where
