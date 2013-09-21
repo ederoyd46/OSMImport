@@ -3,6 +3,8 @@
 module Database where
   
   import Common
+  import Data.Node
+  import Data.Tag
   import Database.MongoDB
   import qualified Data.Text as T
 
@@ -13,7 +15,7 @@ module Database where
     close pipe
 
   saveNodes :: String -> String -> [ImportNode] -> IO ()
-  saveNodes dbconnection dbname nodes = do 
+  saveNodes dbconnection dbname nodes = do
     let insertNodes = insertMany "node" (parseNodes nodes [])
     runDBCommand dbconnection dbname insertNodes
 
@@ -26,7 +28,7 @@ module Database where
                        , "longitude" =: (longitude x)
                        , "tags" =: (parseTags (tags x) [])
                        , "version" =: (version x)
-                       , "timestamp" =: (Common.timestamp x)
+                       , "timestamp" =: (Data.Node.timestamp x)
                        , "changeset" =: (changeset x)
                        , "uid" =: (uid x)
                        , "user" =: (sid x)
@@ -34,7 +36,7 @@ module Database where
         parseNodes xs (buildDoc : y)
 
 
-      parseTags [] [] = []
-      parseTags [] y = reverse y
-      parseTags (x:xs) y =
-        parseTags xs (((T.pack $ key x) =: (Common.value x)) : y)
+  parseTags [] [] = []
+  parseTags [] y = reverse y
+  parseTags (x:xs) y =
+    parseTags xs (((T.pack $ Data.Tag.key x) =: (Data.Tag.value x)) : y)

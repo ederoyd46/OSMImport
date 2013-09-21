@@ -2,6 +2,8 @@
 
 module Redis where
   import Database.Redis
+  import Data.Node
+  import Data.Tag
   import Common
   import Data.ByteString.Char8
   import Data.Maybe(fromMaybe)
@@ -44,6 +46,6 @@ module Redis where
       parseTags [] [] = []
       parseTags [] y = Prelude.reverse y
       parseTags (x:xs) y =
-        parseTags xs (((pack $ key x), (pack $ Common.value x)) : y)
+        parseTags xs (((pack $ Data.Tag.key x), (pack $ Data.Tag.value x)) : y)
       
     

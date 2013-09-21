@@ -3,6 +3,8 @@
 module Importer where
 
 import Common
+import Data.Node
+import Data.Tag
 import qualified Database as MDB
 import qualified Redis as R
 import qualified Data.Serialize as S
@@ -123,11 +125,11 @@ performImport fileName dbcommand = do
       primitiveGroups [] [] _ _ = return []
       primitiveGroups [] y _ _ = return y
       primitiveGroups (x:xs) y st gran = do 
-        let nodes = getVal x dense
-        let ways = getVal x ways
-        let relations = getVal x relations
+        let pgNodes = getVal x dense
+        let pgWays = getVal x ways
+        let pgRelations = getVal x relations
 
-        let impNodes = denseNodes nodes
+        let impNodes = denseNodes pgNodes
         primitiveGroups xs (y ++ impNodes) st gran
 
         where
@@ -137,15 +139,12 @@ performImport fileName dbcommand = do
             let latitudes = map fromIntegral $ F.toList (getVal d lat) 
             let longitudes = map fromIntegral $ F.toList (getVal d lon)
             let keyvals = map fromIntegral $ F.toList (getVal d keys_vals)
-            
             let info = getVal d denseinfo
-
             let versions =  map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.version)
             let timestamps = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp) 
             let changesets = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.changeset)
             let uids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.uid)
             let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
-
             buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
@@ -169,10 +168,10 @@ performImport fileName dbcommand = do
                                       , latitude=lat
                                       , longitude=long
                                       , tags=(fst nextKeyVals)
-                                      , Common.version=Nothing
-                                      , Common.timestamp=Nothing
-                                      , Common.changeset=Nothing
-                                      , Common.uid=Nothing
+                                      , Data.Node.version=Nothing
+                                      , Data.Node.timestamp=Nothing
+                                      , Data.Node.changeset=Nothing
+                                      , Data.Node.uid=Nothing
                                       , sid=Nothing}
             buildNodes ids lats longs (snd nextKeyVals) [] [] [] [] [] (buildNode : nodes)
             where 
@@ -183,21 +182,14 @@ performImport fileName dbcommand = do
                                       , latitude=lat
                                       , longitude=long
                                       , tags=(fst nextKeyVals)
-                                      , Common.version=(Just ver)
-                                      , Common.timestamp=(Just ts)
-                                      , Common.changeset=(Just cs)
-                                      , Common.uid=(Just uid)
+                                      , Data.Node.version=(Just ver)
+                                      , Data.Node.timestamp=(Just ts)
+                                      , Data.Node.changeset=(Just cs)
+                                      , Data.Node.uid=(Just uid)
                                       , sid=(Just (st !! (fromIntegral sid :: Int)))}
             buildNodes ids lats longs (snd nextKeyVals) versions timestamps changesets uids sids (buildNode : nodes)
             where 
               nextKeyVals = splitKeyVal keyvals []
-
-          calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
-          calculateDegrees [] [] gran = []
-          calculateDegrees [] y gran = reverse y
-          calculateDegrees (x:xs) y gran = do
-            let newcoordinate = fromIntegral (x * 100) / nano
-            calculateDegrees xs (newcoordinate : y) gran
 
           splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
           splitKeyVal [] [] = ([], [])
@@ -206,5 +198,4 @@ performImport fileName dbcommand = do
             | x == 0 = (y, (xx : xs))
             | otherwise = splitKeyVal xs (ImportTag (st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
           splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
-          
-         
+              
