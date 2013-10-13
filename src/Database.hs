@@ -7,7 +7,7 @@ module Database where
   import Data.Tag
   import Database.MongoDB
   import qualified Data.Text as T
-
+ 
   runDBCommand :: String -> String -> Action IO a -> IO ()  
   runDBCommand dbconnection dbname command = do
     pipe <- runIOE $ connect (readHostPort dbconnection)
@@ -40,3 +40,4 @@ module Database where
   parseTags [] y = reverse y
   parseTags (x:xs) y =
     parseTags xs (((T.pack $ Data.Tag.key x) =: (Data.Tag.value x)) : y)
+

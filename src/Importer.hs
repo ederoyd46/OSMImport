@@ -80,22 +80,15 @@ performImport fileName dbcommand = do
   let fileLength = fromIntegral $ BLAZY.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-  processData chunks [] 1 dbMVar
+  processData chunks 1 dbMVar
     where
       forkedDBCommand dbMVar = do
         forever $ do
           recs <- takeMVar dbMVar
           dbcommand recs
-
-      processData [] [] _ _ = return ()
-      processData [] y _ dbMVar = do 
-        putStrLn $ "Final Database Checkpoint"
-        putMVar dbMVar y
-      processData x y z dbMVar 
-         | length y > 7999 = do 
-             putMVar dbMVar y
-             processData x [] z dbMVar
-      processData (x:xs) y count dbMVar = do
+ 
+      processData [] _ _ = return ()
+      processData (x:xs) count dbMVar = do
         let blobUncompressed = decompress $ getVal (blob x) zlib_data
         let btype = getVal (blob_header x) type'
         case uToString btype of
@@ -108,30 +101,27 @@ performImport fileName dbcommand = do
             let maxlon = (fromIntegral $ getVal b right) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
-            processData xs y (count + 1) dbMVar
+            processData xs (count + 1) dbMVar
           "OSMData" -> do
             let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BLAZY.ByteString)
             let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
             let gran = fromIntegral $ getVal primitiveBlock granularity
             let pg = F.toList $ getVal primitiveBlock primitivegroup
-            nodes <- primitiveGroups pg [] st gran
-            let nodeCount = length nodes
-            putStrLn $ "Chunk : [" ++ (show count) ++ "] Nodes parsed = [" ++ (show nodeCount) ++ "]"
-            processData xs (y ++ nodes) (count + 1) dbMVar
+            entryCount <- primitiveGroups pg st gran dbMVar 0
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] Entries parsed = [" ++ (show entryCount) ++ "]"
+            processData xs (count + 1) dbMVar
 
 
       -- Primitive Groups
-      primitiveGroups :: [PrimitiveGroup] -> [ImportNode] -> [String] -> Integer -> IO [ImportNode]
-      primitiveGroups [] [] _ _ = return []
-      primitiveGroups [] y _ _ = return y
-      primitiveGroups (x:xs) y st gran = do 
+      primitiveGroups [] _ _ _ count = return count
+      primitiveGroups (x:xs) st gran dbMVar count = do 
         let pgNodes = getVal x dense
         let pgWays = getVal x ways
         let pgRelations = getVal x relations
 
         let impNodes = denseNodes pgNodes
-        primitiveGroups xs (y ++ impNodes) st gran
-
+        putMVar dbMVar impNodes
+        primitiveGroups xs st gran dbMVar (count + (length impNodes))
         where
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 

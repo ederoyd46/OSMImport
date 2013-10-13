@@ -5,15 +5,22 @@ GHC=$(BASE_DIR)/platform/ghc/bin/ghc
 
 HGEOCODER_BIN=$(BASE_DIR)/platform/osmimport/bin/OSMImport
 
-default: install
+default: build
 
 #Default
-install: tags 
+build: tags 
+	cabal configure
+	cabal build
+
+install: tags
 	cabal install
 
 #Initialise target directories
 sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
+
+deps-init:
+	cabal install hprotoc
 
 #Server
 docs:
@@ -27,12 +34,20 @@ cleanMacFiles:
 
 clean:
 	@rm $(BASE_DIR)/tags
-	@rm -r $(BASE_DIR)/dist/*
 	@rm -r $(BASE_DIR)/dist
 	
-#Only use for sandboxed ghci...currently set up for OSX (need a more generic way of doing this)
+test-data:
+	mkdir -p $(BASE_DIR)/download
+	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
+
+test-mongo: build
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport mongo '127.0.0.1:8820' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf'
+
+kill:
+	killall OSMImport
+
 ghci:
-	cd src && ghci -no-user-package-db -package-db $(CABAL_SANDBOX)/x86_64-osx-ghc-7.6.3-packages.conf.d Main
+	cabal repl
 
 generate-protocol-buffers:
 	cd $(BASE_DIR)/etc && hprotoc --unknown_fields --include_imports --haskell_out=$(BASE_DIR)/src $(BASE_DIR)/etc/osmformat.proto $(BASE_DIR)/etc/fileformat.proto

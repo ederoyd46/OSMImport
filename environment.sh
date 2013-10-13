@@ -14,5 +14,6 @@ process_owner=`whoami`
 haskell_install=$platform/osmimport
 haskell_bin=$haskell_install/bin
 
-export PATH=$haskell_bin:$PATH
+build_bin=$base/dist/build/OSMImport
 
+export PATH=$build_bin:$haskell_bin:$PATH
