@@ -24,7 +24,7 @@ deps-init:
 
 #Server
 docs:
-	cabal haddock --executables --hyperlink-sources
+	cabal haddock --executables --hyperlink-source
 
 tags:
 	@hasktags -c src/

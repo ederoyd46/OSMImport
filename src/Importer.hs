@@ -34,6 +34,8 @@ import OSM.OSMFormat.StringTable
 import OSM.OSMFormat.DenseInfo
 import OSM.OSMFormat.DenseNodes
 import OSM.OSMFormat.PrimitiveGroup
+import OSM.OSMFormat.Way
+import OSM.OSMFormat.Relation
 
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
@@ -116,13 +118,35 @@ performImport fileName dbcommand = do
       primitiveGroups [] _ _ _ count = return count
       primitiveGroups (x:xs) st gran dbMVar count = do 
         let pgNodes = getVal x dense
-        let pgWays = getVal x ways
-        let pgRelations = getVal x relations
-
+        let pgWays = F.toList $ getVal x ways
+        let pgRelations = F.toList $ getVal x relations
         let impNodes = denseNodes pgNodes
         putMVar dbMVar impNodes
+
+        let impWays = parseImpWays pgWays
+
+
         primitiveGroups xs st gran dbMVar (count + (length impNodes))
         where
+          parseImpWays :: [Way] -> Int -> Int
+          parseImpWays [] count = count
+          parseImpWays (x:xs) count = do
+            parseImpWays xs ((parseImpWay x) + count)
+            where
+              parseImpWay :: Way -> Int
+              parseImpWay pgWay = do
+                --let keys = map fromIntegral $ F.toList (getVal pgWay keys) 
+                --let vals = map fromIntegral $ F.toList (getVal pgWay vals)
+                --let refs = map fromIntegral $ F.toList (getVal pgWay refs) 
+                --let deltaRefs = deltaDecode refs 0 []
+                1
+
+
+
+          parseImpRelations :: [Relation] -> Int
+          parseImpRelations pgRelations = do
+            1
+
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 
             let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
