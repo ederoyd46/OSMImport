@@ -18,6 +18,7 @@ install: tags
 #Initialise target directories
 sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
+	cabal install --only-dependencies --force-reinstalls
 
 deps-init:
 	cabal install hprotoc
