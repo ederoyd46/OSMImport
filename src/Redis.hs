@@ -35,11 +35,11 @@ module Redis where
       buildHash node = [ ("_id", (parse $ _id node))
                         ,("latitude", (parse $ latitude node))
                         ,("longitude", (parse $ longitude node))
-                        ,("version", parse $ fromMaybe 0 (version node))
-                        ,("timestamp", parse $ fromMaybe 0 (timestamp node))
-                        ,("changeset", parse $ fromMaybe 0 (changeset node))
-                        ,("uid", parse $ fromMaybe 0 (uid node))
-                        ,("user", pack $ fromMaybe "" (sid node))
+                        ,("version", parse $ version node)
+                        ,("timestamp", parse $ timestamp node)
+                        ,("changeset", parse $ changeset node)
+                        ,("uid", parse $ uid node)
+                        ,("user", pack $ sid node)
                         ] ++ parseTags (tags node) []
       
       parseTags [] [] = []

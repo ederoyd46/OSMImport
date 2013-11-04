@@ -1,16 +1,21 @@
 module Data.Node where
   import Data.Tag
 
-  data ImportNode = ImportNode {  _id          :: Integer
-                                , latitude     :: Float
-                                , longitude    :: Float
-                                , tags         :: [ImportTag]
-                                , version      :: Maybe Integer
-                                , timestamp    :: Maybe Integer
-                                , changeset    :: Maybe Integer
-                                , uid          :: Maybe Integer
-                                , sid          :: Maybe String
-                               }  deriving (Show)
+  data ImportNode = ImportNodeFull {  _id          :: Integer
+                                    , latitude     :: Float
+                                    , longitude    :: Float
+                                    , tags         :: [ImportTag]
+                                    , version      :: Integer
+                                    , timestamp    :: Integer
+                                    , changeset    :: Integer
+                                    , uid          :: Integer
+                                    , sid          :: String
+                                   } |
+                    ImportNodeSmall { _id          :: Integer
+                                    , latitude     :: Float
+                                    , longitude    :: Float
+                                    , tags         :: [ImportTag]
+                                    } deriving (Show)
 
 
 
