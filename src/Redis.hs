@@ -4,22 +4,21 @@ module Redis where
   import Database.Redis
   import Data.Node
   import Data.Tag
-  import Common
   import Data.ByteString.Char8
   import Data.Maybe(fromMaybe)
   import Control.Monad (forM_)
   
   connectRedis :: String -> Int -> IO Connection
   connectRedis hostname port = do 
-    conn <- connect info 
+    conn <- connect info' 
     return conn
     where
-      info = ConnInfo { connectHost           = hostname
-                      , connectPort           = PortNumber (fromIntegral port)
-                      , connectAuth           = Nothing
-                      , connectMaxConnections = 50
-                      , connectMaxIdleTime    = 30
-                      }
+      info' = ConnInfo {  connectHost           = hostname
+                        , connectPort           = PortNumber (fromIntegral port)
+                        , connectAuth           = Nothing
+                        , connectMaxConnections = 50
+                        , connectMaxIdleTime    = 30
+                        }
   
   saveNodes :: String -> Int -> Int -> [ImportNode] -> IO ()
   saveNodes hostname port dbname nodes = do
@@ -27,7 +26,7 @@ module Redis where
     runRedis conn $ do
       select $ fromIntegral dbname
       forM_ nodes $ \i -> do
-        created <- hmset (parse $ _id i) (buildHash i)
+        _ <- hmset (parse $ _id i) (buildHash i)
         return ()
     where 
       parse a = pack (show a)

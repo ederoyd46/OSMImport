@@ -1,9 +1,6 @@
 BASE_DIR=$(shell pwd)
 
 CABAL_SANDBOX=$(BASE_DIR)/platform/osmimport
-GHC=$(BASE_DIR)/platform/ghc/bin/ghc
-
-HGEOCODER_BIN=$(BASE_DIR)/platform/osmimport/bin/OSMImport
 
 default: build
 
@@ -15,15 +12,13 @@ build: tags
 install: tags
 	cabal install
 
-#Initialise target directories
+prerequisits-init:
+	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
+
 sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
 	cabal install --only-dependencies --force-reinstalls
 
-deps-init:
-	cabal install hprotoc
-
-#Server
 docs:
 	cabal haddock --executables --hyperlink-source
 

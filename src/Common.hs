@@ -1,5 +1,4 @@
 module Common where
-  import Data.Int
  
   deltaDecode :: Num a => [a] -> a -> [a] -> [a]
   deltaDecode [] _ [] = []
@@ -12,11 +11,11 @@ module Common where
   nano = 1000000000
 
   calculateDegrees :: [Integer] -> [Float] -> Integer -> [Float]
-  calculateDegrees [] [] gran = []
-  calculateDegrees [] y gran = reverse y
+  calculateDegrees [] [] _ = []
+  calculateDegrees [] y _ = reverse y
   calculateDegrees (x:xs) y gran = do
-    let newcoordinate = fromIntegral (x * 100) / nano
+    let newcoordinate = fromIntegral (x * gran) / nano
     calculateDegrees xs (newcoordinate : y) gran
 
     
-         
+  

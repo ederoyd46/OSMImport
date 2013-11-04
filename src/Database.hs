@@ -2,7 +2,6 @@
 
 module Database where
   
-  import Common
   import Data.Node
   import Data.Tag
   import Database.MongoDB
@@ -11,7 +10,7 @@ module Database where
   runDBCommand :: String -> String -> Action IO a -> IO ()  
   runDBCommand dbconnection dbname command = do
     pipe <- runIOE $ connect (readHostPort dbconnection)
-    e <- access pipe master (T.pack dbname) command
+    _ <- access pipe master (T.pack dbname) command
     close pipe
 
   saveNodes :: String -> String -> [ImportNode] -> IO ()

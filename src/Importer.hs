@@ -7,10 +7,8 @@ import Data.Node
 import Data.Tag
 import qualified Database as MDB
 import qualified Redis as R
-import qualified Data.Serialize as S
-import Control.Concurrent (forkIO, MVar, newEmptyMVar, takeMVar, putMVar)
-import Control.Monad(when, forever)
-import Data.Maybe(fromJust, isJust, isNothing)
+import Control.Concurrent (forkIO, newEmptyMVar, takeMVar, putMVar)
+import Control.Monad(forever)
 import Data.Binary.Get(Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib
 import System.Exit
@@ -19,11 +17,10 @@ import qualified Data.ByteString.Lazy as BLAZY
 import Data.List.Split
 
 import Text.ProtocolBuffers.Basic
-import qualified Data.Foldable as F(forM_,toList)
-import qualified Data.ByteString.Lazy.UTF8 as U(toString)
+import qualified Data.Foldable as F(toList)
+import qualified Data.ByteString.Lazy.UTF8 as U (toString)
 
-import Text.ProtocolBuffers(messageGet,utf8,isSet,getVal)
-import Text.DescriptorProtos.FileDescriptorProto
+import Text.ProtocolBuffers(messageGet,getVal)
 
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -39,8 +36,8 @@ import OSM.OSMFormat.Relation
 
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
-      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'"
-      hPutStrLn stderr "example: OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'"
+      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1' 'geo_data' './download/england-latest.osm.pbf'"
+      hPutStrLn stderr "example: OSMImport redis '127.0.0.1' '2' './download/england-latest.osm.pbf'"
       exitFailure
 
 data Chunk = Chunk {
@@ -55,10 +52,10 @@ getChunks limit location chunks
     headerBytes <- getLazyByteString (fromIntegral len)
     let Right (blobHeader,_) = messageGet headerBytes ::  Either String (BlockHeader, ByteString)
     blobData <- getLazyByteString $ fromIntegral $ getVal blobHeader datasize
-    let Right (blob,_) = messageGet blobData :: Either String (Blob, ByteString)
-    bytesRead <- bytesRead
-    let location = fromIntegral bytesRead
-    getChunks limit location ((Chunk blobHeader blob) : chunks)
+    let Right (blob',_) = messageGet blobData :: Either String (Blob, ByteString)
+    bytesRead' <- bytesRead
+    let location' = fromIntegral bytesRead'
+    getChunks limit location' ((Chunk blobHeader blob') : chunks)
   | otherwise = return $ reverse chunks
 
 startImport :: String -> String -> String -> String -> IO ()
@@ -144,8 +141,7 @@ performImport fileName dbcommand = do
 
 
           parseImpRelations :: [Relation] -> Int
-          parseImpRelations pgRelations = do
-            1
+          parseImpRelations pgRelations = 1
 
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do 
