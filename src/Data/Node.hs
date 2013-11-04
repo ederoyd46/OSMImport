@@ -1,5 +1,12 @@
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+
+
 module Data.Node where
   import Data.Tag
+  import Data.Typeable
+
+  --deriving instance Typeable ImportNode
 
   data ImportNode = ImportNodeFull {  _id          :: Integer
                                     , latitude     :: Float
@@ -15,7 +22,7 @@ module Data.Node where
                                     , latitude     :: Float
                                     , longitude    :: Float
                                     , tags         :: [ImportTag]
-                                    } deriving (Show)
+                                    } deriving (Show, Typeable)
 
 
 
