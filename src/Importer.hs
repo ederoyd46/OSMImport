@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+ {-# LANGUAGE OverloadedStrings #-}
 
 module Importer where
 
@@ -118,12 +118,12 @@ performImport fileName dbcommand = do
             parseImpWays xs ((parseImpWay x) + count)
             where
               parseImpWay :: Way -> Int
-              parseImpWay pgWay = do
+              parseImpWay pgWay = 1
                 --let keys = map fromIntegral $ F.toList (getVal pgWay keys) 
                 --let vals = map fromIntegral $ F.toList (getVal pgWay vals)
                 --let refs = map fromIntegral $ F.toList (getVal pgWay refs) 
                 --let deltaRefs = deltaDecode refs 0 []
-                1
+                
 
 
 
@@ -146,36 +146,34 @@ performImport fileName dbcommand = do
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
-            let identifiers = deltaDecode ids 0 []
-            let latitudes = calculateDegrees (deltaDecode lat 0 []) [] gran
-            let longitudes = calculateDegrees (deltaDecode lon 0 []) [] gran
-            let decodedTimestamps = deltaDecode timestamps 0 []
-            let decodedChangesets = deltaDecode changesets 0 []
-            let decodedUIDs = deltaDecode uids 0 []
-            let decodedUsers = deltaDecode sids 0 []
+            let identifiers = deltaDecode ids 0
+            let latitudes = calculateDegrees (deltaDecode lat 0) gran
+            let longitudes = calculateDegrees (deltaDecode lon 0) gran
+            let decodedTimestamps = deltaDecode timestamps 0
+            let decodedChangesets = deltaDecode changesets 0
+            let decodedUIDs = deltaDecode uids 0
+            let decodedUsers = deltaDecode sids 0
             
-            buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers []
+            buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers
 
-          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode] -> [ImportNode]
-          buildNodes [] [] [] [] [] [] [] [] [] [] = []
-          buildNodes [] [] [] [] [] [] [] [] [] nodes = nodes
-          buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] nodes = do
-            let buildNode = ImportNodeSmall id lat long (fst $ nextKeyVals keyvals)
-            buildNodes ids lats longs (snd $ nextKeyVals keyvals) [] [] [] [] [] (buildNode : nodes)
-          
-          buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) nodes = do
-            let buildNode = ImportNodeFull {_id=id
-                                      , latitude=lat
-                                      , longitude=long
-                                      , tags=(fst $ nextKeyVals keyvals)
-                                      , Data.Node.version=ver
-                                      , Data.Node.timestamp=ts
-                                      , Data.Node.changeset=cs
-                                      , Data.Node.uid=uid
-                                      , sid=(st !! (fromIntegral sid :: Int))
-                                    }
-            buildNodes ids lats longs (snd $ nextKeyVals keyvals) versions timestamps changesets uids sids (buildNode : nodes)
-          
+          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
+          buildNodes [] [] [] [] [] [] [] [] [] = []
+          buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) = 
+                            ImportNodeFull {_id=id
+                                            , latitude=lat
+                                            , longitude=long
+                                            , tags=(fst $ nextKeyVals keyvals)
+                                            , Data.Node.version=ver
+                                            , Data.Node.timestamp=ts
+                                            , Data.Node.changeset=cs
+                                            , Data.Node.uid=uid
+                                            , sid=(st !! (fromIntegral sid :: Int))
+                                          } : buildNodes ids lats longs (snd $ nextKeyVals keyvals) versions timestamps changesets uids sids
+
+          buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
+                            ImportNodeSmall id lat long (fst $ nextKeyVals keyvals) : buildNodes ids lats longs (snd $ nextKeyVals keyvals) [] [] [] [] []
+            
+
           nextKeyVals :: [Integer] -> ([ImportTag], [Integer])
           nextKeyVals keyvals= splitKeyVal keyvals []
             where
