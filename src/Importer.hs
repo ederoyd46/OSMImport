@@ -15,11 +15,13 @@ import qualified Data.Foldable as F(toList)
 import qualified Data.ByteString.Lazy.UTF8 as U (toString)
 import Text.ProtocolBuffers (messageGet,getVal)
 
+import Data.Typeable
+
 import Common
-import Data.Node
+import qualified Data.Node as N
 import Data.Tag
 import qualified Data.Way as W
-import qualified Database as MDB (saveNodes)
+import qualified Database as MDB (saveNodes,saveWays)
 import qualified Redis as R (saveNodes)
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -47,39 +49,45 @@ getChunks limit location chunks
     bytesRead' <- bytesRead
     let location' = fromIntegral bytesRead'
     getChunks limit location' ((Chunk blobHeader blob') : chunks)
-  | otherwise = return $ reverse chunks
-
-
+ | otherwise = return $ reverse chunks
 
 
 startImport :: String -> String -> String -> String -> IO ()
 startImport dbtype dbconnection dbname filename = do
   let host = (splitOn ":" dbconnection) !! 0
   let port = read ((splitOn ":" dbconnection) !! 1) :: Int
-  
-  let dbcommand recs = case dbtype of
-                          "mongo" -> MDB.saveNodes dbconnection dbname recs
-                          "redis" -> R.saveNodes host port (read dbname :: Int) recs
-                          _ -> showUsage
-                          
-  performImport filename dbcommand
-  return ()
 
-performImport :: FilePath -> ([ImportNode] -> IO ()) -> IO ()
-performImport fileName dbcommand = do
-  dbMVar <- newEmptyMVar
+  let dbNodecommand recs = case dbtype of
+                            "mongo" -> MDB.saveNodes dbconnection dbname recs
+                            "redis" -> R.saveNodes host port (read dbname :: Int) recs
+                            _ -> showUsage
+
+  let dbWaycommand recs = case dbtype of
+                            "mongo" -> MDB.saveWays dbconnection dbname recs
+                            --"redis" -> R.saveWays host port (read dbname :: Int) recs
+                            _ -> showUsage
   
+  performImport filename dbNodecommand dbWaycommand
+
+
+performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> IO ()
+performImport fileName dbNodecommand dbWaycommand = do
+  nodeMVar <- newEmptyMVar
+  wayMVar <- newEmptyMVar
+
    -- fork the db commit process
-  forkIO $ (\x y -> forever $ y =<< takeMVar x) dbMVar dbcommand
-  handle <- BL.readFile fileName
+  forkIO $ (\x y -> forever $ y =<< takeMVar x) nodeMVar dbNodecommand
+  forkIO $ (\x y -> forever $ y =<< takeMVar x) wayMVar dbWaycommand
 
+  handle <- BL.readFile fileName
   let fileLength = fromIntegral $ BL.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-  processData chunks 1 dbMVar
+  processData chunks 1 nodeMVar wayMVar
+
     where
-      processData [] _ _ = return ()
-      processData (x:xs) count dbMVar = do
+      processData [] _ _ _ = return ()
+      processData (x:xs) count nodeMVar wayMVar = do
         let blobUncompressed = decompress $ getVal (blob x) zlib_data
         let btype = getVal (blob_header x) type'
         case uToString btype of
@@ -92,35 +100,35 @@ performImport fileName dbcommand = do
             let maxlon = (fromIntegral $ getVal b right) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
-            processData xs (count + 1) dbMVar
+            processData xs (count + 1) nodeMVar wayMVar
           "OSMData" -> do
             let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BL.ByteString)
             let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
             let gran = fromIntegral $ getVal primitiveBlock granularity
             let pg = F.toList $ getVal primitiveBlock primitivegroup
-            entryCount <- primitiveGroups pg st gran dbMVar 0
+            entryCount <- primitiveGroups pg st gran nodeMVar wayMVar 0
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Entries parsed = [" ++ (show entryCount) ++ "]"
-            processData xs (count + 1) dbMVar
+            processData xs (count + 1) nodeMVar wayMVar
 
 
       -- Primitive Groups
-      primitiveGroups [] _ _ _ count = return count
-      primitiveGroups (x:xs) st gran dbMVar count = do 
+      primitiveGroups [] _ _ _ _ count = return count
+      primitiveGroups (x:xs) st gran nodeMVar wayMVar count = do 
         let pgNodes = getVal x dense
         let pgWays = F.toList $ getVal x ways
         let pgRelations = F.toList $ getVal x relations
         let impNodes = denseNodes pgNodes
-        putMVar dbMVar impNodes
+        putMVar nodeMVar impNodes
 
         let impWays = parseImpWays pgWays
-        --putMVar dbMVar impWays
+        putMVar wayMVar impWays
 
 
         let newCount = count + (length impNodes) + (length impWays)
-
-        primitiveGroups xs st gran dbMVar newCount
+        primitiveGroups xs st gran nodeMVar wayMVar newCount
         where
           parseImpWays :: [Way] -> [W.ImportWay]
+          parseImpWays [] = []
           parseImpWays (x:xs) = do
             buildImpWay x : parseImpWays xs
             where
@@ -145,7 +153,7 @@ performImport fileName dbcommand = do
           parseImpRelations :: [Relation] -> Int
           parseImpRelations pgRelations = 1
 
-          denseNodes :: DenseNodes -> [ImportNode]
+          denseNodes :: DenseNodes -> [N.ImportNode]
           denseNodes d = do 
             let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
             let latitudes = map fromIntegral $ F.toList (getVal d lat) 
@@ -159,7 +167,7 @@ performImport fileName dbcommand = do
             let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
             buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
 
-          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
+          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [N.ImportNode]
           buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
             let identifiers = deltaDecode ids 0
             let latitudes = calculateDegrees (deltaDecode lat 0) gran
@@ -171,21 +179,21 @@ performImport fileName dbcommand = do
             
             buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers
 
-          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
+          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [N.ImportNode]
           buildNodes [] [] [] [] [] [] [] [] [] = []
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) = 
-                            ImportNodeFull {_id=id
-                                            , latitude=lat
-                                            , longitude=long
-                                            , tags=(fst $ lookupMixedKeyVals keyvals)
-                                            , Data.Node.version=ver
-                                            , Data.Node.timestamp=ts
-                                            , Data.Node.changeset=cs
-                                            , Data.Node.uid=uid
-                                            , sid=(st !! (fromIntegral sid :: Int))
+                          N.ImportNodeFull {  N._id=id
+                                            , N.latitude=lat
+                                            , N.longitude=long
+                                            , N.tags=(fst $ lookupMixedKeyVals keyvals)
+                                            , N.version=ver
+                                            , N.timestamp=ts
+                                            , N.changeset=cs
+                                            , N.uid=uid
+                                            , N.sid=(st !! (fromIntegral sid :: Int))
                                           } : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
-                            ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
+                          N.ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
             
 
           lookupMixedKeyVals :: [Integer] -> ([ImportTag], [Integer])
@@ -201,6 +209,7 @@ performImport fileName dbcommand = do
 
 
           lookupKeyVals :: [Int] -> [Int] -> [ImportTag]
+          lookupKeyVals [] [] = []
           lookupKeyVals (x:xs) (y:ys) = do
             ImportTag (st !! x) (st !! y) : lookupKeyVals xs ys
 
