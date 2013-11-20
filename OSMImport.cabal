@@ -32,8 +32,8 @@ Executable OSMImport
     protocol-buffers-descriptor == 2.0.14,
     utf8-string == 0.3.7
 
-  -- ghc-options: -threaded -O2 -auto-all -rtsopts -with-rtsopts=-H4096m
-  ghc-options: -O -rtsopts -threaded
+  -- ghc-options: -O2 -auto-all -rtsopts -with-rtsopts=-H4096m -threaded 
+  ghc-options: -O2 -rtsopts -threaded
   
   default-language: Haskell2010
   

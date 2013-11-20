@@ -3,10 +3,11 @@ module Data.Way where
 
   data ImportWay = ImportWay {  _id          :: Integer
                               , tags         :: [ImportTag]
-                              , version      :: Maybe Integer
-                              , timestamp    :: Maybe Integer
-                              , changeset    :: Maybe Integer
-                              , user         :: Maybe String
+                              , version      :: Integer
+                              , timestamp    :: Integer
+                              , changeset    :: Integer
+                              , uid			 :: Integer
+                              , user         :: String
                               , nodes        :: [Integer]
                             } deriving (Show)
 

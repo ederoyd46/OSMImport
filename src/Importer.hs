@@ -18,6 +18,7 @@ import Text.ProtocolBuffers (messageGet,getVal)
 import Common
 import Data.Node
 import Data.Tag
+import qualified Data.Way as W
 import qualified Database as MDB (saveNodes)
 import qualified Redis as R (saveNodes)
 import OSM.FileFormat.Blob
@@ -31,6 +32,7 @@ import OSM.OSMFormat.DenseNodes
 import OSM.OSMFormat.PrimitiveGroup
 import OSM.OSMFormat.Way
 import OSM.OSMFormat.Relation
+import OSM.OSMFormat.Info
 
 data Chunk = Chunk {blob_header :: BlockHeader, blob :: Blob} deriving (Show)
 
@@ -46,6 +48,9 @@ getChunks limit location chunks
     let location' = fromIntegral bytesRead'
     getChunks limit location' ((Chunk blobHeader blob') : chunks)
   | otherwise = return $ reverse chunks
+
+
+
 
 startImport :: String -> String -> String -> String -> IO ()
 startImport dbtype dbconnection dbname filename = do
@@ -108,23 +113,33 @@ performImport fileName dbcommand = do
         putMVar dbMVar impNodes
 
         let impWays = parseImpWays pgWays
+        --putMVar dbMVar impWays
 
 
-        primitiveGroups xs st gran dbMVar (count + (length impNodes))
+        let newCount = count + (length impNodes) + (length impWays)
+
+        primitiveGroups xs st gran dbMVar newCount
         where
-          parseImpWays :: [Way] -> Int -> Int
-          parseImpWays [] count = count
-          parseImpWays (x:xs) count = do
-            parseImpWays xs ((parseImpWay x) + count)
+          parseImpWays :: [Way] -> [W.ImportWay]
+          parseImpWays (x:xs) = do
+            buildImpWay x : parseImpWays xs
             where
-              parseImpWay :: Way -> Int
-              parseImpWay pgWay = 1
-                --let keys = map fromIntegral $ F.toList (getVal pgWay keys) 
-                --let vals = map fromIntegral $ F.toList (getVal pgWay vals)
-                --let refs = map fromIntegral $ F.toList (getVal pgWay refs) 
-                --let deltaRefs = deltaDecode refs 0 []
-                
-
+              buildImpWay :: Way -> W.ImportWay
+              buildImpWay pgWay = do
+                let id = fromIntegral (getVal pgWay OSM.OSMFormat.Way.id)
+                let keys = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.keys) 
+                let vals = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.vals)
+                let refs = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.refs)
+                let info = (getVal pgWay OSM.OSMFormat.Way.info)
+                let deltaRefs = deltaDecode refs 0
+                W.ImportWay { W._id=id
+                            , W.tags=(lookupKeyVals keys vals)
+                            , W.version=fromIntegral (getVal info OSM.OSMFormat.Info.version)
+                            , W.timestamp=fromIntegral (getVal info OSM.OSMFormat.Info.timestamp)
+                            , W.changeset=fromIntegral (getVal info OSM.OSMFormat.Info.changeset)
+                            , W.uid=fromIntegral (getVal info OSM.OSMFormat.Info.uid)
+                            , W.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
+                            , W.nodes=deltaRefs}
 
 
           parseImpRelations :: [Relation] -> Int
@@ -162,20 +177,19 @@ performImport fileName dbcommand = do
                             ImportNodeFull {_id=id
                                             , latitude=lat
                                             , longitude=long
-                                            , tags=(fst $ nextKeyVals keyvals)
+                                            , tags=(fst $ lookupMixedKeyVals keyvals)
                                             , Data.Node.version=ver
                                             , Data.Node.timestamp=ts
                                             , Data.Node.changeset=cs
                                             , Data.Node.uid=uid
                                             , sid=(st !! (fromIntegral sid :: Int))
-                                          } : buildNodes ids lats longs (snd $ nextKeyVals keyvals) versions timestamps changesets uids sids
-
+                                          } : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
-                            ImportNodeSmall id lat long (fst $ nextKeyVals keyvals) : buildNodes ids lats longs (snd $ nextKeyVals keyvals) [] [] [] [] []
+                            ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
             
 
-          nextKeyVals :: [Integer] -> ([ImportTag], [Integer])
-          nextKeyVals keyvals= splitKeyVal keyvals []
+          lookupMixedKeyVals :: [Integer] -> ([ImportTag], [Integer])
+          lookupMixedKeyVals keyvals= splitKeyVal keyvals []
             where
               splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
               splitKeyVal [] [] = ([], [])
@@ -186,10 +200,16 @@ performImport fileName dbcommand = do
               splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
 
 
+          lookupKeyVals :: [Int] -> [Int] -> [ImportTag]
+          lookupKeyVals (x:xs) (y:ys) = do
+            ImportTag (st !! x) (st !! y) : lookupKeyVals xs ys
+
+
+
 showUsage :: IO ()
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
-      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1' 'geo_data' './download/england-latest.osm.pbf'"
+      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
       hPutStrLn stderr "example: OSMImport redis '127.0.0.1' '2' './download/england-latest.osm.pbf'"
       exitFailure
 
