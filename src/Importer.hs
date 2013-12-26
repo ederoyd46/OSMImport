@@ -21,7 +21,8 @@ import Common
 import qualified Data.Node as N
 import Data.Tag
 import qualified Data.Way as W
-import qualified Database as MDB (saveNodes,saveWays)
+import qualified Data.Relation as R
+import qualified Database as MDB (saveNodes,saveWays,saveRelation)
 import qualified Redis as R (saveNodes)
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -49,7 +50,7 @@ getChunks limit location chunks
     bytesRead' <- bytesRead
     let location' = fromIntegral bytesRead'
     getChunks limit location' ((Chunk blobHeader blob') : chunks)
- | otherwise = return $ reverse chunks
+ | otherwise = return $ chunks
 
 
 startImport :: String -> String -> String -> String -> IO ()
@@ -67,27 +68,34 @@ startImport dbtype dbconnection dbname filename = do
                             --"redis" -> R.saveWays host port (read dbname :: Int) recs
                             _ -> showUsage
   
-  performImport filename dbNodecommand dbWaycommand
+  let dbRelationcommand recs = case dbtype of
+                            "mongo" -> MDB.saveRelation dbconnection dbname recs
+                            --"redis" -> R.saveWays host port (read dbname :: Int) recs
+                            _ -> showUsage
+
+  performImport filename dbNodecommand dbWaycommand dbRelationcommand
 
 
-performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> IO ()
-performImport fileName dbNodecommand dbWaycommand = do
+performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> ([R.ImportRelation] -> IO ()) -> IO ()
+performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
   nodeMVar <- newEmptyMVar
   wayMVar <- newEmptyMVar
+  relationMVar <- newEmptyMVar
 
    -- fork the db commit process
   forkIO $ (\x y -> forever $ y =<< takeMVar x) nodeMVar dbNodecommand
   forkIO $ (\x y -> forever $ y =<< takeMVar x) wayMVar dbWaycommand
+  forkIO $ (\x y -> forever $ y =<< takeMVar x) relationMVar dbRelationcommand
 
   handle <- BL.readFile fileName
   let fileLength = fromIntegral $ BL.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-  processData chunks 1 nodeMVar wayMVar
+  processData chunks 1 nodeMVar wayMVar relationMVar
 
     where
-      processData [] _ _ _ = return ()
-      processData (x:xs) count nodeMVar wayMVar = do
+      processData [] _ _ _ _ = return ()
+      processData (x:xs) count nodeMVar wayMVar relationMVar = do
         let blobUncompressed = decompress $ getVal (blob x) zlib_data
         let btype = getVal (blob_header x) type'
         case uToString btype of
@@ -100,20 +108,20 @@ performImport fileName dbNodecommand dbWaycommand = do
             let maxlon = (fromIntegral $ getVal b right) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
-            processData xs (count + 1) nodeMVar wayMVar
+            processData xs (count + 1) nodeMVar wayMVar relationMVar
           "OSMData" -> do
             let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BL.ByteString)
             let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
             let gran = fromIntegral $ getVal primitiveBlock granularity
             let pg = F.toList $ getVal primitiveBlock primitivegroup
-            entryCount <- primitiveGroups pg st gran nodeMVar wayMVar 0
+            entryCount <- primitiveGroups pg st gran nodeMVar wayMVar relationMVar 0
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Entries parsed = [" ++ (show entryCount) ++ "]"
-            processData xs (count + 1) nodeMVar wayMVar
+            processData xs (count + 1) nodeMVar wayMVar relationMVar
 
 
       -- Primitive Groups
-      primitiveGroups [] _ _ _ _ count = return count
-      primitiveGroups (x:xs) st gran nodeMVar wayMVar count = do 
+      primitiveGroups [] _ _ _ _ _ count = return count
+      primitiveGroups (x:xs) st gran nodeMVar wayMVar relationMVar count = do 
         let pgNodes = getVal x dense
         let pgWays = F.toList $ getVal x ways
         let pgRelations = F.toList $ getVal x relations
@@ -123,10 +131,36 @@ performImport fileName dbNodecommand dbWaycommand = do
         let impWays = parseImpWays pgWays
         putMVar wayMVar impWays
 
+        let impRelations = parseImpRelations pgRelations
+        putMVar relationMVar impRelations
 
-        let newCount = count + (length impNodes) + (length impWays)
-        primitiveGroups xs st gran nodeMVar wayMVar newCount
+
+        let newCount = count + (length impNodes) + (length impWays) + (length impRelations)
+        primitiveGroups xs st gran nodeMVar wayMVar relationMVar newCount
         where
+          parseImpRelations :: [Relation] -> [R.ImportRelation]
+          parseImpRelations [] = []
+          parseImpRelations (x:xs) = do
+            buildImpRelation x : parseImpRelations xs
+            where
+              buildImpRelation :: Relation -> R.ImportRelation
+              buildImpRelation pgRelation = do
+                let id = fromIntegral (getVal pgRelation OSM.OSMFormat.Relation.id)
+                let keys = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.keys)
+                let vals = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.vals)
+                let info = (getVal pgRelation OSM.OSMFormat.Relation.info)
+                let memids = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids)
+                let deltaMemIds = deltaDecode memids 0
+                R.ImportRelation { R._id=id
+                            , R.tags=(lookupKeyVals keys vals)
+                            , R.version=fromIntegral (getVal info OSM.OSMFormat.Info.version)
+                            , R.timestamp=fromIntegral (getVal info OSM.OSMFormat.Info.timestamp)
+                            , R.changeset=fromIntegral (getVal info OSM.OSMFormat.Info.changeset)
+                            , R.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
+                            , R.memids=deltaMemIds
+                          }
+
+
           parseImpWays :: [Way] -> [W.ImportWay]
           parseImpWays [] = []
           parseImpWays (x:xs) = do
@@ -148,10 +182,6 @@ performImport fileName dbNodecommand dbWaycommand = do
                             , W.uid=fromIntegral (getVal info OSM.OSMFormat.Info.uid)
                             , W.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
                             , W.nodes=deltaRefs}
-
-
-          parseImpRelations :: [Relation] -> Int
-          parseImpRelations pgRelations = 1
 
           denseNodes :: DenseNodes -> [N.ImportNode]
           denseNodes d = do 

@@ -3,10 +3,10 @@ module Data.Relation where
 
   data ImportRelation = ImportRelation {  _id          :: Integer
                                         , tags         :: [ImportTag]
-                                        , version      :: Maybe Integer
-                                        , timestamp    :: Maybe Integer
-                                        , changeset    :: Maybe Integer
-                                        , user         :: Maybe String
-                                        , members      :: [ImportTag]
+                                        , version      :: Integer
+                                        , timestamp    :: Integer
+                                        , changeset    :: Integer
+                                        , user         :: String
+                                        , memids       :: [Integer]
                                        } deriving (Show)
 

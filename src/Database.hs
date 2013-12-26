@@ -5,6 +5,7 @@ module Database where
   import qualified Data.Node as N
   import Data.Tag
   import qualified Data.Way as W
+  import qualified Data.Relation as R
   import Database.MongoDB
   import qualified Data.Text as T
  
@@ -34,8 +35,8 @@ module Database where
 
 
   saveWays :: String -> String -> [W.ImportWay] -> IO ()
-  saveWays dbconnection dbname nodes = do
-    let insertWays = insertMany "way" (parseWays nodes)
+  saveWays dbconnection dbname ways = do
+    let insertWays = insertMany "way" (parseWays ways)
     runDBCommand dbconnection dbname insertWays
     where
       parseWays [] = []
@@ -48,6 +49,23 @@ module Database where
                           , "user" =: (W.user x)
                           , "nodes" =: (W.nodes x)
                           ] : parseWays xs
+
+
+
+  saveRelation :: String -> String -> [R.ImportRelation] -> IO ()
+  saveRelation dbconnection dbname nodes = do
+    let insertRelation = insertMany "relation" (parseRelation nodes)
+    runDBCommand dbconnection dbname insertRelation
+    where
+      parseRelation [] = []
+      parseRelation (x:xs) = [ "_id" =: (R._id x)
+                          , "tags" =: (parseTags (R.tags x))
+                          , "version" =: (R.version x)
+                          , "timestamp" =: (R.timestamp x)
+                          , "changeset" =: (R.changeset x)
+                          , "user" =: (R.user x)
+                          , "memids" =: (R.memids x)
+                          ] : parseRelation xs
 
   parseTags [] = []
   parseTags (x:xs) = ((T.pack $ Data.Tag.key x) =: (Data.Tag.value x)) : parseTags xs
