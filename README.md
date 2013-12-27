@@ -43,4 +43,5 @@ Four options are needed to start the import process
 [EXAMPLE]
 
 OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
+
 OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'

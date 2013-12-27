@@ -10,20 +10,19 @@ import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import qualified Data.ByteString.Lazy as BL (readFile, length, ByteString)
 import Data.List.Split (splitOn)
-import Text.ProtocolBuffers.Basic
+import Text.ProtocolBuffers.Basic(ByteString,uToString)
 import qualified Data.Foldable as F(toList)
 import qualified Data.ByteString.Lazy.UTF8 as U (toString)
 import Text.ProtocolBuffers (messageGet,getVal)
 
-import Data.Typeable
-
-import Common
+import Common(nano,deltaDecode,calculateDegrees)
 import qualified Data.Node as N
 import Data.Tag
 import qualified Data.Way as W
 import qualified Data.Relation as R
 import qualified Database as MDB (saveNodes,saveWays,saveRelation)
 import qualified Redis as R (saveNodes)
+
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
 import OSM.OSMFormat.HeaderBlock 
@@ -82,17 +81,16 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
   wayMVar <- newEmptyMVar
   relationMVar <- newEmptyMVar
 
-   -- fork the db commit process
-  forkIO $ (\x y -> forever $ y =<< takeMVar x) nodeMVar dbNodecommand
-  forkIO $ (\x y -> forever $ y =<< takeMVar x) wayMVar dbWaycommand
-  forkIO $ (\x y -> forever $ y =<< takeMVar x) relationMVar dbRelationcommand
+  let forkDB a b = forkIO $ (\x y -> forever $ y =<< takeMVar x) a b
+  forkDB nodeMVar dbNodecommand
+  forkDB wayMVar dbWaycommand
+  forkDB relationMVar dbRelationcommand
 
   handle <- BL.readFile fileName
   let fileLength = fromIntegral $ BL.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
   processData chunks 1 nodeMVar wayMVar relationMVar
-
     where
       processData [] _ _ _ _ = return ()
       processData (x:xs) count nodeMVar wayMVar relationMVar = do
