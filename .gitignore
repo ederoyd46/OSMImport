@@ -10,3 +10,4 @@ tags
 RELEASE
 *.pbf
 *.sublime-workspace
+.hdevtools.sock
