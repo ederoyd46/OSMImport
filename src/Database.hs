@@ -50,8 +50,6 @@ module Database where
                           , "nodes" =: (W.nodes x)
                           ] : parseWays xs
 
-
-
   saveRelation :: String -> String -> [R.ImportRelation] -> IO ()
   saveRelation dbconnection dbname nodes = do
     let insertRelation = insertMany "relation" (parseRelation nodes)
@@ -64,7 +62,7 @@ module Database where
                           , "timestamp" =: (R.timestamp x)
                           , "changeset" =: (R.changeset x)
                           , "user" =: (R.user x)
-                          , "memids" =: (R.memids x)
+                          , "members" =: (parseTags (R.members x))
                           ] : parseRelation xs
 
   parseTags [] = []

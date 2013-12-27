@@ -147,17 +147,20 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                 let keys = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.keys)
                 let vals = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.vals)
                 let info = (getVal pgRelation OSM.OSMFormat.Relation.info)
-                let memids = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids)
-                let deltaMemIds = deltaDecode memids 0
+                let types = map show $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.types)
+                let memids = deltaDecode (map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids)) 0
                 R.ImportRelation { R._id=id
                             , R.tags=(lookupKeyVals keys vals)
                             , R.version=fromIntegral (getVal info OSM.OSMFormat.Info.version)
                             , R.timestamp=fromIntegral (getVal info OSM.OSMFormat.Info.timestamp)
                             , R.changeset=fromIntegral (getVal info OSM.OSMFormat.Info.changeset)
                             , R.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
-                            , R.memids=deltaMemIds
+                            , R.members=buildRelationTags types memids
                           }
-
+                  where
+                    buildRelationTags :: [String] -> [Int] -> [ImportTag]
+                    buildRelationTags [] [] = []
+                    buildRelationTags (x:xs) (y:ys) = ImportTag x (show y) : buildRelationTags xs ys
 
           parseImpWays :: [Way] -> [W.ImportWay]
           parseImpWays [] = []
@@ -240,8 +243,6 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
           lookupKeyVals [] [] = []
           lookupKeyVals (x:xs) (y:ys) = do
             ImportTag (st !! x) (st !! y) : lookupKeyVals xs ys
-
-
 
 showUsage :: IO ()
 showUsage = do

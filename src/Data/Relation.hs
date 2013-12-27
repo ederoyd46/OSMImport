@@ -7,6 +7,6 @@ module Data.Relation where
                                         , timestamp    :: Integer
                                         , changeset    :: Integer
                                         , user         :: String
-                                        , memids       :: [Integer]
+                                        , members      :: [ImportTag]
                                        } deriving (Show)
 
