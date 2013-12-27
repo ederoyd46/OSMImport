@@ -18,25 +18,16 @@ Current Status
 
 0.5.0.0 - Reimplemented using alternative procol buffer library due to slow parsing of some records and problems with the sint datatype.
 
+0.6.0.0 - Added Ways and Relation initial implementation for MongoDB Only. Improved build process.
+
+
 Installation Instructions
 -------------------------
 
 Yes this has been written on a MAC! Although most scripts will just work with Linux, the services aren't yet generated for Linux and I've not added any prerequisits for Linux.
 
-[OSX Users]
-
-1. If you have homebrew (http://brew.sh/) installed then run the prerequisits.sh to install required libraries.
-
-[DEVELOPER]
-
-1. Run "build-platform.sh" to install the platform (sandbox). For OSX users this also generates the launchd services in /tmp, on a reboot run "build-platform.sh" again to regenerate the launchd services (it won't reinstall mongo or ghc).
-2. Run "make" to build the project. (You can also run "make sandbox-init" first if you use the yet unrelease Cabal 1.17).
-3. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
-
-[USER]
-
-2. If you already have mongodb installed and just want to build and run OSMImport, then run "cabal install" and off you go.
-
+1. Run build-platform.sh to install the required cabal libraries and build the project
+2. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
 
 Usage
 -----
@@ -53,7 +44,3 @@ Four options are needed to start the import process
 
 OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
 OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'
-
-Notes
------
-

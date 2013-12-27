@@ -20,5 +20,29 @@ function init() {
     fi
 }
 
+function installPrerequisites() {
+    echo Install Prerequisites
+    if [ "$uname" == 'Darwin' ]; then
+      echo Install OSX Brew Prerequisites
+      brew update
+      brew upgrade
+      brew install autoconf automake pcre gnupg
+    fi
+
+    echo Install Cabal Prerequisites
+    make prerequisites-init
+
+    echo Initisalise the Sandbox
+    make sandbox-init
+}
+
+function build() {
+    echo Build the project
+    make build
+}
 
 init 
+installPrerequisites
+build
+
+echo Complete!!

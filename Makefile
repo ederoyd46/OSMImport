@@ -12,7 +12,7 @@ build: tags
 install: tags
 	cabal install
 
-prerequisits-init:
+prerequisites-init:
 	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
 
 sandbox-init:
@@ -26,7 +26,12 @@ tags:
 	@hasktags -c src/
 
 cleanMacFiles:
-	find . -name '._*' -exec rm {} \;
+	@find . -name '._*' -exec rm {} \;
+	@find . -name '.hdevtools.sock' -exec rm {} \;
+
+cleanPlatform: clean cleanMacFiles
+	@rm cabal.sandbox.config
+	@rm -r platform
 
 clean:
 	@rm $(BASE_DIR)/tags
