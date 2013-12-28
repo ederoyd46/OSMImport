@@ -20,7 +20,6 @@ Current Status
 
 0.6.0.0 - Added Ways and Relation initial implementation for MongoDB Only. Improved build process.
 
-
 Installation Instructions
 -------------------------
 
