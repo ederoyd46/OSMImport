@@ -35,7 +35,6 @@ Usage
 
 Four options are needed to start the import process
 
-1. dbtype - database type to import into (either mongo or redis)
 1. dbconnection - the host and port the database is running on (authentication is currently not supported).
 2. dbname - the name of the database you want to import into.
 3. filename - the name of the file to import.
