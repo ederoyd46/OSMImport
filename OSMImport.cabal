@@ -2,7 +2,7 @@ name:                OSMImport
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.6.0.0
+version:             0.7.0.0
 synopsis:            Application to import the Open Street Map Protocol Buffer format into MongoDB or Redis
 license:             MIT
 license-file:        LICENSE
@@ -25,15 +25,13 @@ Executable OSMImport
     zlib == 0.5.4.1,
     mtl == 2.1.2,
     mongoDB == 1.4.1.1,
-    hedis == 0.6.2,
-    geohash == 1.0.1,
     split == 0.2.2,
     protocol-buffers == 2.0.14,
     protocol-buffers-descriptor == 2.0.14,
     utf8-string == 0.3.7
 
   -- ghc-options: -O2 -auto-all -rtsopts -with-rtsopts=-H4096m -threaded 
-  ghc-options: -O2 -rtsopts -threaded
+  ghc-options: -O2 -rtsopts
   
   default-language: Haskell2010
   

@@ -42,7 +42,8 @@ test-data:
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
 
 test-mongo: build
-	$(BASE_DIR)/dist/build/OSMImport/OSMImport mongo '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' +RTS -N2 -RTS
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' 
+	#+RTS -N2 -RTS -- Added to end to make use of multicores
 
 kill:
 	killall OSMImport
@@ -55,4 +56,3 @@ generate-protocol-buffers:
 
 clean-generated-protocol-buffers:
 	@rm -r $(BASE_DIR)/src/OSM
-

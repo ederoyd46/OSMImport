@@ -8,12 +8,11 @@ import System.Environment
 main :: IO ()
 main =  do 
   args <- getArgs
-  when (length args < 4) $ showUsage
+  when (length args < 3) $ showUsage
   
-  let dbtype = args !! 0
-  let dbconnection = args !! 1
-  let dbname = args !! 2
-  let filename = args !! 3
-  startImport dbtype dbconnection dbname filename
+  let dbconnection = args !! 0
+  let dbname = args !! 1
+  let filename = args !! 2
+  startImport dbconnection dbname filename
   return ()
 

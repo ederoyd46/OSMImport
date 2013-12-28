@@ -21,7 +21,6 @@ import Data.Tag
 import qualified Data.Way as W
 import qualified Data.Relation as R
 import qualified Database as MDB (saveNodes,saveWays,saveRelation)
-import qualified Redis as R (saveNodes)
 
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -52,48 +51,26 @@ getChunks limit location chunks
  | otherwise = return $ reverse chunks
 
 
-startImport :: String -> String -> String -> String -> IO ()
-startImport dbtype dbconnection dbname filename = do
+startImport :: String -> String -> String -> IO ()
+startImport dbconnection dbname filename = do
   let host = (splitOn ":" dbconnection) !! 0
   let port = read ((splitOn ":" dbconnection) !! 1) :: Int
-
-  let dbNodecommand recs = case dbtype of
-                            "mongo" -> MDB.saveNodes dbconnection dbname recs
-                            "redis" -> R.saveNodes host port (read dbname :: Int) recs
-                            _ -> showUsage
-
-  let dbWaycommand recs = case dbtype of
-                            "mongo" -> MDB.saveWays dbconnection dbname recs
-                            --"redis" -> R.saveWays host port (read dbname :: Int) recs
-                            _ -> showUsage
-  
-  let dbRelationcommand recs = case dbtype of
-                            "mongo" -> MDB.saveRelation dbconnection dbname recs
-                            --"redis" -> R.saveWays host port (read dbname :: Int) recs
-                            _ -> showUsage
-
+  let dbNodecommand recs = MDB.saveNodes dbconnection dbname recs
+  let dbWaycommand recs = MDB.saveWays dbconnection dbname recs
+  let dbRelationcommand recs = MDB.saveRelation dbconnection dbname recs
   performImport filename dbNodecommand dbWaycommand dbRelationcommand
 
 
 performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> ([R.ImportRelation] -> IO ()) -> IO ()
 performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
-  nodeMVar <- newEmptyMVar
-  wayMVar <- newEmptyMVar
-  relationMVar <- newEmptyMVar
-
-  let forkDB a b = forkIO $ (\x y -> forever $ y =<< takeMVar x) a b
-  forkDB nodeMVar dbNodecommand
-  forkDB wayMVar dbWaycommand
-  forkDB relationMVar dbRelationcommand
-
   handle <- BL.readFile fileName
   let fileLength = fromIntegral $ BL.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-  processData chunks 1 nodeMVar wayMVar relationMVar
+  processData chunks 1
     where
-      processData [] _ _ _ _ = return ()
-      processData (x:xs) count nodeMVar wayMVar relationMVar = do
+      processData [] _ = return ()
+      processData (x:xs) count = do
         let blobUncompressed = decompress $ getVal (blob x) zlib_data
         let btype = getVal (blob_header x) type'
         case uToString btype of
@@ -106,35 +83,33 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             let maxlon = (fromIntegral $ getVal b right) / nano
             putStrLn $ "Bounding Box (lat, lon): (" ++ (show minlat) ++ "," ++ (show minlon) ++ ") (" ++ (show maxlat) ++ "," ++ (show maxlon) ++ ")"
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Header data"
-            processData xs (count + 1) nodeMVar wayMVar relationMVar
+            processData xs (count + 1)
           "OSMData" -> do
             let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BL.ByteString)
             let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
             let gran = fromIntegral $ getVal primitiveBlock granularity
             let pg = F.toList $ getVal primitiveBlock primitivegroup
-            entryCount <- primitiveGroups pg st gran nodeMVar wayMVar relationMVar 0
+            entryCount <- primitiveGroups pg st gran 0
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Entries parsed = [" ++ (show entryCount) ++ "]"
-            processData xs (count + 1) nodeMVar wayMVar relationMVar
+            processData xs (count + 1)
 
 
       -- Primitive Groups
-      primitiveGroups [] _ _ _ _ _ count = return count
-      primitiveGroups (x:xs) st gran nodeMVar wayMVar relationMVar count = do 
+      primitiveGroups [] _ _ count = return count
+      primitiveGroups (x:xs) st gran count = do 
         let pgNodes = getVal x dense
         let pgWays = F.toList $ getVal x ways
         let pgRelations = F.toList $ getVal x relations
         let impNodes = denseNodes pgNodes
-        putMVar nodeMVar impNodes
-
         let impWays = parseImpWays pgWays
-        putMVar wayMVar impWays
-
         let impRelations = parseImpRelations pgRelations
-        putMVar relationMVar impRelations
 
+        dbNodecommand impNodes
+        dbWaycommand impWays
+        dbRelationcommand impRelations
 
         let newCount = count + (length impNodes) + (length impWays) + (length impRelations)
-        primitiveGroups xs st gran nodeMVar wayMVar relationMVar newCount
+        primitiveGroups xs st gran newCount
         where
           parseImpRelations :: [Relation] -> [R.ImportRelation]
           parseImpRelations [] = []
@@ -247,7 +222,6 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
 showUsage :: IO ()
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
-      hPutStrLn stderr "example: OSMImport mongo '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
-      hPutStrLn stderr "example: OSMImport redis '127.0.0.1' '2' './download/england-latest.osm.pbf'"
+      hPutStrLn stderr "example: OSMImport '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
       exitFailure
 

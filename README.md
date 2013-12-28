@@ -20,6 +20,8 @@ Current Status
 
 0.6.0.0 - Added Ways and Relation initial implementation for MongoDB Only. Improved build process.
 
+0.7.0.0 - Removed redis support. Removed use of multiple threads.
+
 Installation Instructions
 -------------------------
 
@@ -41,6 +43,4 @@ Four options are needed to start the import process
 
 [EXAMPLE]
 
-OSMImport mongo '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
-
-OSMImport redis '127.0.0.1:7721' '2' './download/england-latest.osm.pbf'
+OSMImport '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
