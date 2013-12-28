@@ -33,7 +33,7 @@ Yes this has been written on a MAC! Although most scripts will just work with Li
 Usage
 -----
 
-Four options are needed to start the import process
+Three options are needed to start the import process
 
 1. dbconnection - the host and port the database is running on (authentication is currently not supported).
 2. dbname - the name of the database you want to import into.
