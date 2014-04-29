@@ -11,3 +11,5 @@ RELEASE
 *.pbf
 *.sublime-workspace
 .hdevtools.sock
+bin
+BUILD

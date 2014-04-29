@@ -4,6 +4,12 @@ CABAL_SANDBOX=$(BASE_DIR)/platform/osmimport
 
 default: build
 
+ghc-build: tags
+	-@rm -r bin BUILD
+	@mkdir -p BUILD bin
+	@cp -r src/* BUILD
+	cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
+
 #Default
 build: tags 
 	cabal configure
