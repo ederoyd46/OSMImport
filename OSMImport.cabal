@@ -3,7 +3,7 @@ name:                OSMImport
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
 version:             0.7.0.0
-synopsis:            Application to import the Open Street Map Protocol Buffer format into MongoDB or Redis
+synopsis:            Application to import the Open Street Map Protocol Buffer format into MongoDB
 license:             MIT
 license-file:        LICENSE
 author:              Matthew Brown
@@ -24,7 +24,7 @@ Executable OSMImport
     binary == 0.7.1.0,
     zlib == 0.5.4.1,
     mtl == 2.1.2,
-    mongoDB == 1.4.1.1,
+    mongoDB == 1.4.4,
     split == 0.2.2,
     protocol-buffers == 2.0.14,
     protocol-buffers-descriptor == 2.0.14,
