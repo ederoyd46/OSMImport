@@ -11,7 +11,7 @@ ghc-build: tags
 	cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
 
 #Default
-build: tags 
+.PHONY build: tags 
 	cabal configure
 	cabal build
 
