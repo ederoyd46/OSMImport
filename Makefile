@@ -4,52 +4,44 @@ CABAL_SANDBOX=$(BASE_DIR)/platform/osmimport
 
 default: build
 
-ghc-build-clean:
+clean:
 	-@rm -r bin BUILD
 
-ghc-build-init: ghc-build-clean tags
-	@mkdir -p BUILD bin
-	@cp -r src/* BUILD
+init: tags
+	-@mkdir -p BUILD bin
+	-@rm -rf BUILD/*
+	-@cp -r src/* BUILD
 
-ghc-build: ghc-build-init
+build: init
 	@cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
 
 # Cabal ######################################################################################
 
 # Default
-.PHONY build: tags 
+cabal-build: tags 
 	cabal configure
 	cabal build
 
-install: tags
+cabal-install: tags
 	cabal install
 
-prerequisites-init:
+cabal-prerequisites-init:
 	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
 
-sandbox-init:
+cabal-sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
 	cabal install --only-dependencies --force-reinstalls
 
-docs:
+cabal-docs:
 	cabal haddock --executables --hyperlink-source
+
+cabal-ghci:
+	cabal repl
 
 ##############################################################################################
 tags:
 	@hasktags -c src/
 
-cleanMacFiles:
-	@find . -name '._*' -exec rm {} \;
-	@find . -name '.hdevtools.sock' -exec rm {} \;
-
-cleanPlatform: clean cleanMacFiles
-	@rm cabal.sandbox.config
-	@rm -r platform
-
-clean:
-	@rm $(BASE_DIR)/tags
-	@rm -r $(BASE_DIR)/dist
-	
 test-data:
 	mkdir -p $(BASE_DIR)/download
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
@@ -61,8 +53,12 @@ test-mongo:
 kill:
 	killall OSMImport
 
-ghci:
-	cabal repl
+clean-platform: clean
+	-@rm cabal.sandbox.config
+	-@rm -r platform
+	-@find . -name '._*' -exec rm {} \;
+	-@rm -r $(BASE_DIR)/dist
+	-@rm $(BASE_DIR)/tags
 
 generate-protocol-buffers:
 	cd $(BASE_DIR)/etc && hprotoc --unknown_fields --include_imports --haskell_out=$(BASE_DIR)/src $(BASE_DIR)/etc/osmformat.proto $(BASE_DIR)/etc/fileformat.proto
