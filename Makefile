@@ -4,13 +4,19 @@ CABAL_SANDBOX=$(BASE_DIR)/platform/osmimport
 
 default: build
 
-ghc-build: tags
+ghc-build-clean:
 	-@rm -r bin BUILD
+
+ghc-build-init: ghc-build-clean tags
 	@mkdir -p BUILD bin
 	@cp -r src/* BUILD
-	cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
 
-#Default
+ghc-build: ghc-build-init
+	@cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
+
+# Cabal ######################################################################################
+
+# Default
 .PHONY build: tags 
 	cabal configure
 	cabal build
@@ -28,6 +34,7 @@ sandbox-init:
 docs:
 	cabal haddock --executables --hyperlink-source
 
+##############################################################################################
 tags:
 	@hasktags -c src/
 
@@ -47,7 +54,7 @@ test-data:
 	mkdir -p $(BASE_DIR)/download
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
 
-test-mongo: build
+test-mongo:
 	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' 
 	#+RTS -N2 -RTS -- Added to end to make use of multicores
 
