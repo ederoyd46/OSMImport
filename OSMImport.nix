@@ -18,7 +18,7 @@ let
       self.split
     ]
   ));
-  version = "v1.0.0.1";
+  version = "1.0.0.1";
   mainSrc = fetchurl {
     url = "https://github.com/ederoyd46/OSMImport/archive/${version}.tar.gz";
     sha256 = null;
