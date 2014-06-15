@@ -24,6 +24,8 @@ Current Status
 
 0.8.0.0 - Changed to use ghc --make by default.
 
+1.0.0.0 - Added better NIX support
+
 Build Instructions
 ------------------
 
@@ -37,6 +39,7 @@ Nix
 Nix Alternative
 ---------------
 
+1. Run nix-build OSMImport.nix to download and build the latest release. Resulting binaries are in the ./result/bin directory
 
 Cabal Build
 -----------
