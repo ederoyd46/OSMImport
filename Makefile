@@ -1,6 +1,8 @@
 BASE_DIR=$(shell pwd)
-
 CABAL_SANDBOX=$(BASE_DIR)/platform/osmimport
+GHC_FLAGS=-O2 -rtsopts
+
+# GHC Build #################################################################################
 
 default: build
 
@@ -13,7 +15,7 @@ init: tags
 	-@cp -r src/* BUILD
 
 build: init
-	@cd BUILD && ghc --make Main && mv Main ../bin/OSMImport 
+	@cd BUILD && ghc --make Main $(GHC_FLAGS) && mv Main ../bin/OSMImport 
 
 # Cabal ######################################################################################
 

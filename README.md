@@ -16,17 +16,30 @@ Current Status
 
 0.4.0.0 - Changed to use multiple threads. Moved a bulk of the logic into it's own module
 
-0.5.0.0 - Reimplemented using alternative procol buffer library due to slow parsing of some records and problems with the sint datatype.
+0.5.0.0 - Reimplemented using alternative protocol buffer library due to slow parsing of some records and problems with the sint datatype.
 
 0.6.0.0 - Added Ways and Relation initial implementation for MongoDB Only. Improved build process.
 
 0.7.0.0 - Removed redis support. Removed use of multiple threads.
 
-Installation Instructions
--------------------------
+0.8.0.0 - Changed to use ghc --make by default.
 
-Yes this has been written on a MAC! Although most scripts will just work with Linux, the services aren't yet generated for Linux and I've not added any prerequisits for Linux.
+Build Instructions
+------------------
 
+Nix
+---
+
+1. Run "nix-build osmimport-env.nix" to build myEnvFun containing the dependencies.
+2. Run "./result/bin/load-env-osmimport-env" to load the environment settings
+3. Run "make" to build the project
+
+Nix Alternative
+---------------
+
+
+Cabal Build
+-----------
 1. Run build-platform.sh to install the required cabal libraries and build the project
 2. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
 
