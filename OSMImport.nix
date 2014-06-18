@@ -2,6 +2,7 @@ let
   pkgs = import <nixpkgs> {};
   stdenv = pkgs.stdenv;
   fetchurl = pkgs.fetchurl;
+  fetchgit = pkgs.fetchgit;
   haskellEnv = pkgs.haskellPackages_ghc763_no_profiling.ghcWithPackages (self : (
     [
       self.protocolBuffers
@@ -19,15 +20,16 @@ let
     ]
   ));
   version = "1.0.0.1";
-  mainSrc = fetchurl {
-    url = "https://github.com/ederoyd46/OSMImport/archive/${version}.tar.gz";
-    sha256 = null;
+  gitSrc = fetchgit {
+    url = "https://github.com/ederoyd46/OSMImport";
+    rev = "321fad8b87685609ce12709572308608de75e093";
+    sha256 = "06rk1dmqyw4z6wmpw127m7sb241pmwvyg8vd3znqriga2fzgid7g";
   };
 in 
 
 stdenv.mkDerivation rec {
   name = "OSMImport-${version}";
-  src = mainSrc;
+  src = gitSrc;
 
   buildPhase = ''
     export PATH=${haskellEnv.outPath}/bin:$PATH
