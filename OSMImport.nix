@@ -22,8 +22,8 @@ let
   version = "1.0.0.1";
   gitSrc = fetchgit {
     url = "https://github.com/ederoyd46/OSMImport";
-    rev = "321fad8b87685609ce12709572308608de75e093";
-    sha256 = "06rk1dmqyw4z6wmpw127m7sb241pmwvyg8vd3znqriga2fzgid7g";
+    rev = "c2ad1affe2e13fdb9b1d1119840aa41119225c1d";
+    sha256 = "15qdmh0l53bgjz3smgm6ybxxqpnv7mahr80z991d8fz1m7rmg55n";
   };
 in 
 
