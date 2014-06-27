@@ -11,7 +11,7 @@ module Database where
  
   runDBCommand :: String -> String -> Action IO a -> IO ()  
   runDBCommand dbconnection dbname command = do
-    pipe <- runIOE $ connect (readHostPort dbconnection)
+    pipe <- connect (readHostPort dbconnection)
     _ <- access pipe master (T.pack dbname) command
     close pipe
 
