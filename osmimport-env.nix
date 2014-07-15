@@ -1,6 +1,6 @@
 let
   pkgs = import <nixpkgs> {};
-  haskellEnv = pkgs.haskellPackages_ghc763_no_profiling.ghcWithPackages (self : (
+  haskellEnv = pkgs.haskellPackages_ghc763.ghcWithPackages (self : (
     [
       self.protocolBuffers
       self.protocolBuffersDescriptor
