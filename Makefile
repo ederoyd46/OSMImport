@@ -27,6 +27,7 @@ cabal-build: tags
 cabal-install: tags
 	cabal install
 
+#Can probably ignore this one now
 cabal-prerequisites-init:
 	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
 

@@ -17,18 +17,18 @@ Executable OSMImport
     main-is: Main.hs
 
   Build-depends:
-    base >= 4.5.0.0,
-    text == 0.11.3.1,
-    cereal == 0.4.0.0,
-    bytestring == 0.10.4.0,
-    binary >= 0.7.1.0,
-    zlib == 0.5.4.1,
-    mtl == 2.1.2,
-    mongoDB == 2.0,
-    split == 0.2.2,
+    base >= 4.7.0.0,
+    text >= 0.11.3.1,
+    cereal >= 0.4.0.0,
+    bytestring >= 0.10.4.0,
+    binary >= 0.7.2.1,
+    zlib >= 0.5.4.1,
+    mtl >= 2.2.1,
+    mongoDB >= 2.0.3,
+    split >= 0.2.2,
     protocol-buffers == 2.0.17,
     protocol-buffers-descriptor == 2.0.17,
-    utf8-string == 0.3.8
+    utf8-string >= 0.3.8
 
   -- ghc-options: -O2 -auto-all -rtsopts -with-rtsopts=-H4096m -threaded 
   ghc-options: -O2 -rtsopts
