@@ -3,7 +3,7 @@
 module Importer where
 
 import Control.Concurrent (forkIO, newEmptyMVar, takeMVar, putMVar)
-import Control.Monad (forever)
+import Control.Monad (forever, when)
 import Data.Binary.Get (Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib (decompress)
 import System.Exit (exitFailure)
@@ -104,9 +104,9 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
         let impWays = parseImpWays pgWays
         let impRelations = parseImpRelations pgRelations
 
-        dbNodecommand impNodes
-        dbWaycommand impWays
-        dbRelationcommand impRelations
+        when ((length impNodes) > 0) (dbNodecommand impNodes)
+        when ((length impWays) > 0) (dbWaycommand impWays)
+        when ((length impRelations) > 0) (dbRelationcommand impRelations)
 
         let newCount = count + (length impNodes) + (length impWays) + (length impRelations)
         primitiveGroups xs st gran newCount
