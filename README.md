@@ -73,10 +73,10 @@ Pull down the repository
 docker pull ederoyd46/osmimport
 ```
 
-Run an import, assumes you have a container called mongo, and have downloaded the england data from OSM in protocol buffer format<br>
+Run an import, assumes you have a container called mongo, and have downloaded the england data from OSM in protocol buffer format<
 
 ```
-docker run -v "`$PWD/download`":/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
+docker run --rm=true -v "`echo $PWD/download`":/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
 ```
 
 
