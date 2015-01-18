@@ -17,6 +17,18 @@ init: tags
 build: init
 	@cd BUILD && ghc --make Main $(GHC_FLAGS) && mv Main ../bin/OSMImport 
 
+
+# Docker #####################################################################################
+start_mongo:
+	docker run -d -v $(BASE_DIR)/data:/data/db -p 27017:27017 mongo
+
+run_in_docker:
+	docker run -it -rm -v `pwd`:/project -w /project/src haskell:geo-index ghci Importer.hs
+
+
+build_in_docker:
+	docker build --rm=true .
+
 # Cabal ######################################################################################
 
 # Default
