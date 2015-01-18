@@ -67,13 +67,13 @@ OSMImport '127.0.0.1:7720' 'geo_data' './download/england-latest.osm.pbf'
 
 Docker Usage
 ------------
-```
 Pull down the repository
+```
 docker pull ederoyd46/osmimport
 ```
 
-```
 Run an import, assumes you have a container called mongo, and have downloaded the england data from OSM in protocol buffer format<br>
+```
 docker run -it -v "`$PWD/download`":/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
 ```
 
