@@ -77,7 +77,7 @@ Run an import, assumes you have a container called mongo, and have downloaded th
 
 ```
 docker run -d --name mongo -p 27017:27017 -v $(pwd)/data/db mongo
-docker run --rm=true -v $(pwd)/download:/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
+docker run -it --rm=true --link mongo:mongo -v $(pwd)/download:/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
 ```
 
 
