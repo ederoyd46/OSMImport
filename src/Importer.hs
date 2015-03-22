@@ -10,6 +10,7 @@ import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import qualified Data.ByteString.Lazy as BL (readFile, length, ByteString)
 import Data.List.Split (splitOn)
+import Data.String.Utils (replace)
 import Text.ProtocolBuffers.Basic(ByteString,uToString)
 import qualified Data.Foldable as F(toList)
 import qualified Data.ByteString.Lazy.UTF8 as U (toString)
@@ -24,7 +25,7 @@ import qualified Database as MDB (saveNodes,saveWays,saveRelation)
 
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
-import OSM.OSMFormat.HeaderBlock 
+import OSM.OSMFormat.HeaderBlock
 import OSM.OSMFormat.PrimitiveBlock
 import OSM.OSMFormat.HeaderBBox
 import OSM.OSMFormat.StringTable
@@ -96,7 +97,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
 
       -- Primitive Groups
       primitiveGroups [] _ _ count = return count
-      primitiveGroups (x:xs) st gran count = do 
+      primitiveGroups (x:xs) st gran count = do
         let pgNodes = getVal x dense
         let pgWays = F.toList $ getVal x ways
         let pgRelations = F.toList $ getVal x relations
@@ -145,7 +146,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
               buildImpWay :: Way -> W.ImportWay
               buildImpWay pgWay = do
                 let id = fromIntegral (getVal pgWay OSM.OSMFormat.Way.id)
-                let keys = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.keys) 
+                let keys = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.keys)
                 let vals = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.vals)
                 let refs = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.refs)
                 let info = (getVal pgWay OSM.OSMFormat.Way.info)
@@ -160,14 +161,14 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                             , W.nodes=deltaRefs}
 
           denseNodes :: DenseNodes -> [N.ImportNode]
-          denseNodes d = do 
+          denseNodes d = do
             let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
-            let latitudes = map fromIntegral $ F.toList (getVal d lat) 
+            let latitudes = map fromIntegral $ F.toList (getVal d lat)
             let longitudes = map fromIntegral $ F.toList (getVal d lon)
             let keyvals = map fromIntegral $ F.toList (getVal d keys_vals)
             let info = getVal d denseinfo
             let versions =  map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.version)
-            let timestamps = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp) 
+            let timestamps = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp)
             let changesets = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.changeset)
             let uids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.uid)
             let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
@@ -182,12 +183,12 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             let decodedChangesets = deltaDecode changesets 0
             let decodedUIDs = deltaDecode uids 0
             let decodedUsers = deltaDecode sids 0
-            
+
             buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers
 
           buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [N.ImportNode]
           buildNodes [] [] [] [] [] [] [] [] [] = []
-          buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) = 
+          buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) =
                           N.ImportNodeFull {  N._id=id
                                             , N.latitude=lat
                                             , N.longitude=long
@@ -200,7 +201,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                                           } : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
                           N.ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
-            
+
 
           lookupMixedKeyVals :: [Integer] -> ([ImportTag], [Integer])
           lookupMixedKeyVals keyvals= splitKeyVal keyvals []
@@ -208,20 +209,23 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
               splitKeyVal :: [Integer] -> [ImportTag] -> ([ImportTag], [Integer])
               splitKeyVal [] [] = ([], [])
               splitKeyVal [] y = (y, [])
-              splitKeyVal (x:xx:xs) y 
+              splitKeyVal (x:xx:xs) y
                 | x == 0 = (y, (xx : xs))
-                | otherwise = splitKeyVal xs (ImportTag (st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
+                | otherwise = splitKeyVal xs (ImportTag (fixIllegalFieldName $ st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
               splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
 
 
           lookupKeyVals :: [Int] -> [Int] -> [ImportTag]
           lookupKeyVals [] [] = []
           lookupKeyVals (x:xs) (y:ys) = do
-            ImportTag (st !! x) (st !! y) : lookupKeyVals xs ys
+            ImportTag (fixIllegalFieldName $ st !! x) (st !! y) : lookupKeyVals xs ys
+
+          -- Fixes Mongos no . in the field name rule
+          fixIllegalFieldName :: String -> String
+          fixIllegalFieldName s = replace "." ":" s
 
 showUsage :: IO ()
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
       hPutStrLn stderr "example: OSMImport '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
       exitFailure
-
