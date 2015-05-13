@@ -30,10 +30,11 @@ function installPrerequisites() {
     fi
 
     echo Install Cabal Prerequisites
-    make prerequisites-init
+    cabal update
+    make cabal-prerequisites-init
 
-    echo Initisalise the Sandbox
-    make sandbox-init
+    echo Initialize the Sandbox
+    make cabal-sandbox-init
 }
 
 function build() {
