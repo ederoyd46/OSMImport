@@ -9,13 +9,13 @@ default: build
 clean:
 	-@rm -r bin BUILD
 
-init: tags
+init:
 	-@mkdir -p BUILD bin
 	-@rm -rf BUILD/*
 	-@cp -r src/* BUILD
 
 build: init
-	@cd BUILD && ghc --make Main $(GHC_FLAGS) && mv Main ../bin/OSMImport 
+	@cd BUILD && ghc --make Main $(GHC_FLAGS) && mv Main ../bin/OSMImport
 
 
 # Docker #####################################################################################
@@ -32,11 +32,11 @@ build_in_docker:
 # Cabal ######################################################################################
 
 # Default
-cabal-build: tags 
+cabal-build:
 	cabal configure
 	cabal build
 
-cabal-install: tags
+cabal-install:
 	cabal install
 
 #Can probably ignore this one now
@@ -55,8 +55,6 @@ cabal-ghci:
 	cabal repl
 
 ##############################################################################################
-tags:
-	@hasktags -c src/
 
 test-data:
 	mkdir -p $(BASE_DIR)/download
@@ -74,7 +72,6 @@ clean-platform: clean
 	-@rm -r platform
 	-@find . -name '._*' -exec rm {} \;
 	-@rm -r $(BASE_DIR)/dist
-	-@rm $(BASE_DIR)/tags
 
 generate-protocol-buffers:
 	cd $(BASE_DIR)/etc && hprotoc --unknown_fields --include_imports --haskell_out=$(BASE_DIR)/src $(BASE_DIR)/etc/osmformat.proto $(BASE_DIR)/etc/fileformat.proto
