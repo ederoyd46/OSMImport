@@ -6,8 +6,7 @@ module Data.Way where
                               , version      :: Integer
                               , timestamp    :: Integer
                               , changeset    :: Integer
-                              , uid			     :: Integer
+                              , uid          :: Integer
                               , user         :: String
                               , nodes        :: [Integer]
                             } deriving (Show)
-

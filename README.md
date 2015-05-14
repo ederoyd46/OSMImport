@@ -5,48 +5,9 @@ This application parses data from the Open Street Map Protocol Buffer Format (ht
 
 It has been written in Haskell and was inspired by the https://github.com/larroy/osmcompiler project.
 
-Current Status
---------------
-
-0.1.0.0 - Initial version, imports (some) node data only. Lots of work to do :)
-
-0.2.0.0 - Added missing node data, now commits to MongoDB in larger batches.
-
-0.3.0.0 - Added support to import into redis, lots of performance improvements.
-
-0.4.0.0 - Changed to use multiple threads. Moved a bulk of the logic into it's own module
-
-0.5.0.0 - Reimplemented using alternative protocol buffer library due to slow parsing of some records and problems with the sint datatype.
-
-0.6.0.0 - Added Ways and Relation initial implementation for MongoDB Only. Improved build process.
-
-0.7.0.0 - Removed redis support. Removed use of multiple threads.
-
-0.8.0.0 - Changed to use ghc --make by default.
-
-1.0.0.1 - Added better NIX support
-
 Build Instructions
 ------------------
 
-Nix
----
-
-1. Run "nix-build osmimport-env.nix" to build myEnvFun containing the dependencies.
-2. Run "./result/bin/load-env-osmimport-env" to load the environment settings
-3. Run "make" to build the project
-
-Nix Alternative
----------------
-
-Run nix-build OSMImport.nix to download and build the latest release. Resulting binaries are in the ./result/bin directory
-
-or
-
-Run nix-env -if OSMImport.nix to install the latest release into your local store.
-
-Cabal Build
------------
 1. Run build-platform.sh to install the required cabal libraries and build the project
 2. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
 
@@ -79,8 +40,4 @@ Run an import, assumes you have a container called mongo, and have downloaded th
 docker run -d --name mongo -p 27017:27017 -v $(pwd)/data:/data/db mongo
 docker run -it --rm=true --link mongo:mongo -v $(pwd)/download:/data ederoyd46/osmimport 'mongo:27017' 'geo_data' '/data/england-latest.osm.pbf'
 ```
-
-
-
-
 

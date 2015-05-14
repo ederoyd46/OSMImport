@@ -25,13 +25,13 @@ function installPrerequisites() {
     if [ "$uname" == 'Darwin' ]; then
       echo Install OSX Brew Prerequisites
       brew update
-      brew upgrade
+      brew upgrade --all
       brew install autoconf automake pcre gnupg
     fi
 
-    echo Install Cabal Prerequisites
-    cabal update
-    make cabal-prerequisites-init
+#    echo Install Cabal Prerequisites
+#    cabal update
+#    make cabal-prerequisites-init
 
     echo Initialize the Sandbox
     make cabal-sandbox-init
@@ -39,10 +39,10 @@ function installPrerequisites() {
 
 function build() {
     echo Build the project
-    make build
+    make cabal-install
 }
 
-init 
+init
 installPrerequisites
 build
 

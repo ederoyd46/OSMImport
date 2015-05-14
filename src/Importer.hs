@@ -1,4 +1,5 @@
  {-# LANGUAGE OverloadedStrings #-}
+ {-# LANGUAGE FlexibleContexts #-}
 
 module Importer where
 

@@ -9,9 +9,6 @@ cabal.sandbox.config
 tags
 RELEASE
 *.pbf
-*.sublime-workspace
 .hdevtools.sock
 bin
 BUILD
-result
-data

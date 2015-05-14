@@ -40,11 +40,12 @@ cabal-install: tags
 	cabal install
 
 #Can probably ignore this one now
-cabal-prerequisites-init:
-	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
+#cabal-prerequisites-init:
+#	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
 
 cabal-sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
+	cabal sandbox add-source $(BASE_DIR)/patches/protocol-buffers-2.0.17
 	cabal install --only-dependencies --force-reinstalls
 
 cabal-docs:

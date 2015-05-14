@@ -6,24 +6,24 @@ import qualified Data.Typeable as Prelude'
 import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
 import qualified OSM.OSMFormat.Info as OSM.OSMFormat (Info)
- 
+
 data Way = Way{id :: !P'.Int64, keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32), info :: !(P'.Maybe OSM.OSMFormat.Info),
                refs :: !(P'.Seq P'.Int64), unknown'field :: !P'.UnknownField}
          deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
- 
+
 instance P'.UnknownMessage Way where
   getUnknownField = unknown'field
   putUnknownField u'f msg = msg{unknown'field = u'f}
- 
+
 instance P'.Mergeable Way where
   mergeAppend (Way x'1 x'2 x'3 x'4 x'5 x'6) (Way y'1 y'2 y'3 y'4 y'5 y'6)
    = Way (P'.mergeAppend x'1 y'1) (P'.mergeAppend x'2 y'2) (P'.mergeAppend x'3 y'3) (P'.mergeAppend x'4 y'4)
       (P'.mergeAppend x'5 y'5)
       (P'.mergeAppend x'6 y'6)
- 
+
 instance P'.Default Way where
   defaultValue = Way P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue
- 
+
 instance P'.Wire Way where
   wireSize ft' self'@(Way x'1 x'2 x'3 x'4 x'5 x'6)
    = case ft' of
@@ -69,12 +69,12 @@ instance P'.Wire Way where
              64 -> Prelude'.fmap (\ !new'Field -> old'Self{refs = P'.append (refs old'Self) new'Field}) (P'.wireGet 18)
              66 -> Prelude'.fmap (\ !new'Field -> old'Self{refs = P'.mergeAppend (refs old'Self) new'Field}) (P'.wireGetPacked 18)
              _ -> let (field'Number, wire'Type) = P'.splitWireTag wire'Tag in P'.unknown field'Number wire'Type old'Self
- 
+
 instance P'.MessageAPI msg' (msg' -> Way) Way where
   getVal m' f' = f' m'
- 
+
 instance P'.GPB Way
- 
+
 instance P'.ReflectDescriptor Way where
   getMessageInfo _ = P'.GetMessageInfo (P'.fromDistinctAscList [8]) (P'.fromDistinctAscList [8, 16, 18, 24, 26, 34, 64, 66])
   reflectDescriptorInfo _
