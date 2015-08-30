@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.Node (Node(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -7,8 +8,9 @@ import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
 import qualified OSM.OSMFormat.Info as OSM.OSMFormat (Info)
  
-data Node = Node{id :: !P'.Int64, keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32), info :: !(P'.Maybe OSM.OSMFormat.Info),
-                 lat :: !P'.Int64, lon :: !P'.Int64, unknown'field :: !P'.UnknownField}
+data Node = Node{id :: !(P'.Int64), keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32),
+                 info :: !(P'.Maybe OSM.OSMFormat.Info), lat :: !(P'.Int64), lon :: !(P'.Int64),
+                 unknown'field :: !(P'.UnknownField)}
           deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage Node where
@@ -84,3 +86,52 @@ instance P'.ReflectDescriptor Node where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.Node\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Node\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"Node.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.id\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"id\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 8}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.keys\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"keys\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 18}, packedTag = Just (WireTag {getWireTag = 16},WireTag {getWireTag = 18}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.vals\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"vals\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 26}, packedTag = Just (WireTag {getWireTag = 24},WireTag {getWireTag = 26}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.info\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"info\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Info\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Info\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.lat\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"lat\"}, fieldNumber = FieldId {getFieldId = 8}, wireTag = WireTag {getWireTag = 64}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Node.lon\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Node\"], baseName' = FName \"lon\"}, fieldNumber = FieldId {getFieldId = 9}, wireTag = WireTag {getWireTag = 72}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType Node where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg Node where
+  textPut msg
+   = do
+       P'.tellT "id" (id msg)
+       P'.tellT "keys" (keys msg)
+       P'.tellT "vals" (vals msg)
+       P'.tellT "info" (info msg)
+       P'.tellT "lat" (lat msg)
+       P'.tellT "lon" (lon msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'id, parse'keys, parse'vals, parse'info, parse'lat, parse'lon]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'id
+         = P'.try
+            (do
+               v <- P'.getT "id"
+               Prelude'.return (\ o -> o{id = v}))
+        parse'keys
+         = P'.try
+            (do
+               v <- P'.getT "keys"
+               Prelude'.return (\ o -> o{keys = P'.append (keys o) v}))
+        parse'vals
+         = P'.try
+            (do
+               v <- P'.getT "vals"
+               Prelude'.return (\ o -> o{vals = P'.append (vals o) v}))
+        parse'info
+         = P'.try
+            (do
+               v <- P'.getT "info"
+               Prelude'.return (\ o -> o{info = v}))
+        parse'lat
+         = P'.try
+            (do
+               v <- P'.getT "lat"
+               Prelude'.return (\ o -> o{lat = v}))
+        parse'lon
+         = P'.try
+            (do
+               v <- P'.getT "lon"
+               Prelude'.return (\ o -> o{lon = v}))

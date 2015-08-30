@@ -23,7 +23,7 @@ start_mongo:
 	docker run -d -v $(BASE_DIR)/data:/data/db -p 27017:27017 mongo
 
 run_in_docker:
-	docker run -it -rm -v `pwd`:/project -w /project/src ederoyd46/osmimport ghci Importer.hs
+	docker run -it -rm -v `pwd`:/OSMImport -w /OSMImport ederoyd46/osmimport ghci Importer.hs
 
 build_in_docker:
 	docker build --tag="ederoyd46/osmimport" --rm=true .
@@ -37,10 +37,6 @@ cabal-build:
 
 cabal-install:
 	cabal install
-
-#Can probably ignore this one now
-#cabal-prerequisites-init:
-#	cabal install hello happy alex hprotoc hlint hoogle ghc-mod HsColour hasktags hdevtools stylish-haskell haskell-docs
 
 cabal-sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
@@ -59,8 +55,7 @@ test-data:
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
 
 test-mongo:
-	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf'
-	#+RTS -N2 -RTS -- Added to end to make use of multicores
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
 
 kill:
 	killall OSMImport

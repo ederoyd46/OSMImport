@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.FileFormat.BlockHeader (BlockHeader(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -6,8 +7,8 @@ import qualified Data.Typeable as Prelude'
 import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
-data BlockHeader = BlockHeader{type' :: !P'.Utf8, indexdata :: !(P'.Maybe P'.ByteString), datasize :: !P'.Int32,
-                               unknown'field :: !P'.UnknownField}
+data BlockHeader = BlockHeader{type' :: !(P'.Utf8), indexdata :: !(P'.Maybe P'.ByteString), datasize :: !(P'.Int32),
+                               unknown'field :: !(P'.UnknownField)}
                  deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage BlockHeader where
@@ -66,3 +67,34 @@ instance P'.ReflectDescriptor BlockHeader where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Fileformat.BlockHeader\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"FileFormat\"], baseName = MName \"BlockHeader\"}, descFilePath = [\"OSM\",\"FileFormat\",\"BlockHeader.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.BlockHeader.type\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"BlockHeader\"], baseName' = FName \"type'\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.BlockHeader.indexdata\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"BlockHeader\"], baseName' = FName \"indexdata\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 18}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.BlockHeader.datasize\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"BlockHeader\"], baseName' = FName \"datasize\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 24}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType BlockHeader where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg BlockHeader where
+  textPut msg
+   = do
+       P'.tellT "type" (type' msg)
+       P'.tellT "indexdata" (indexdata msg)
+       P'.tellT "datasize" (datasize msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'type', parse'indexdata, parse'datasize]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'type'
+         = P'.try
+            (do
+               v <- P'.getT "type"
+               Prelude'.return (\ o -> o{type' = v}))
+        parse'indexdata
+         = P'.try
+            (do
+               v <- P'.getT "indexdata"
+               Prelude'.return (\ o -> o{indexdata = v}))
+        parse'datasize
+         = P'.try
+            (do
+               v <- P'.getT "datasize"
+               Prelude'.return (\ o -> o{datasize = v}))

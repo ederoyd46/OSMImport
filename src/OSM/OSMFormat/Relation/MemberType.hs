@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.Relation.MemberType (MemberType(..)) where
 import Prelude ((+), (/), (.))
 import qualified Prelude as Prelude'
@@ -59,3 +60,7 @@ instance P'.ReflectEnum MemberType where
    = P'.EnumInfo (P'.makePNF (P'.pack ".Osmformat.Relation.MemberType") [] ["OSM", "OSMFormat", "Relation"] "MemberType")
       ["OSM", "OSMFormat", "Relation", "MemberType.hs"]
       [(0, "NODE"), (1, "WAY"), (2, "RELATION")]
+ 
+instance P'.TextType MemberType where
+  tellT = P'.tellShow
+  getT = P'.getRead

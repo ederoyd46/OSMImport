@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.FileFormat.Blob (Blob(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -7,7 +8,8 @@ import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
 data Blob = Blob{raw :: !(P'.Maybe P'.ByteString), raw_size :: !(P'.Maybe P'.Int32), zlib_data :: !(P'.Maybe P'.ByteString),
-                 lzma_data :: !(P'.Maybe P'.ByteString), bzip2_data :: !(P'.Maybe P'.ByteString), unknown'field :: !P'.UnknownField}
+                 lzma_data :: !(P'.Maybe P'.ByteString), bzip2_data :: !(P'.Maybe P'.ByteString),
+                 unknown'field :: !(P'.UnknownField)}
           deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage Blob where
@@ -75,3 +77,46 @@ instance P'.ReflectDescriptor Blob where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Fileformat.Blob\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"FileFormat\"], baseName = MName \"Blob\"}, descFilePath = [\"OSM\",\"FileFormat\",\"Blob.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.Blob.raw\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"Blob\"], baseName' = FName \"raw\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.Blob.raw_size\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"Blob\"], baseName' = FName \"raw_size\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 16}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.Blob.zlib_data\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"Blob\"], baseName' = FName \"zlib_data\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 26}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.Blob.lzma_data\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"Blob\"], baseName' = FName \"lzma_data\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Fileformat.Blob.bzip2_data\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"FileFormat\",MName \"Blob\"], baseName' = FName \"bzip2_data\"}, fieldNumber = FieldId {getFieldId = 5}, wireTag = WireTag {getWireTag = 42}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType Blob where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg Blob where
+  textPut msg
+   = do
+       P'.tellT "raw" (raw msg)
+       P'.tellT "raw_size" (raw_size msg)
+       P'.tellT "zlib_data" (zlib_data msg)
+       P'.tellT "lzma_data" (lzma_data msg)
+       P'.tellT "bzip2_data" (bzip2_data msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'raw, parse'raw_size, parse'zlib_data, parse'lzma_data, parse'bzip2_data]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'raw
+         = P'.try
+            (do
+               v <- P'.getT "raw"
+               Prelude'.return (\ o -> o{raw = v}))
+        parse'raw_size
+         = P'.try
+            (do
+               v <- P'.getT "raw_size"
+               Prelude'.return (\ o -> o{raw_size = v}))
+        parse'zlib_data
+         = P'.try
+            (do
+               v <- P'.getT "zlib_data"
+               Prelude'.return (\ o -> o{zlib_data = v}))
+        parse'lzma_data
+         = P'.try
+            (do
+               v <- P'.getT "lzma_data"
+               Prelude'.return (\ o -> o{lzma_data = v}))
+        parse'bzip2_data
+         = P'.try
+            (do
+               v <- P'.getT "bzip2_data"
+               Prelude'.return (\ o -> o{bzip2_data = v}))

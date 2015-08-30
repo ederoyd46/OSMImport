@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.HeaderBBox (HeaderBBox(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -6,8 +7,8 @@ import qualified Data.Typeable as Prelude'
 import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
-data HeaderBBox = HeaderBBox{left :: !P'.Int64, right :: !P'.Int64, top :: !P'.Int64, bottom :: !P'.Int64,
-                             unknown'field :: !P'.UnknownField}
+data HeaderBBox = HeaderBBox{left :: !(P'.Int64), right :: !(P'.Int64), top :: !(P'.Int64), bottom :: !(P'.Int64),
+                             unknown'field :: !(P'.UnknownField)}
                 deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage HeaderBBox where
@@ -71,3 +72,40 @@ instance P'.ReflectDescriptor HeaderBBox where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.HeaderBBox\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"HeaderBBox\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"HeaderBBox.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBBox.left\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBBox\"], baseName' = FName \"left\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 8}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBBox.right\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBBox\"], baseName' = FName \"right\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 16}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBBox.top\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBBox\"], baseName' = FName \"top\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 24}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBBox.bottom\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBBox\"], baseName' = FName \"bottom\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 32}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType HeaderBBox where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg HeaderBBox where
+  textPut msg
+   = do
+       P'.tellT "left" (left msg)
+       P'.tellT "right" (right msg)
+       P'.tellT "top" (top msg)
+       P'.tellT "bottom" (bottom msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'left, parse'right, parse'top, parse'bottom]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'left
+         = P'.try
+            (do
+               v <- P'.getT "left"
+               Prelude'.return (\ o -> o{left = v}))
+        parse'right
+         = P'.try
+            (do
+               v <- P'.getT "right"
+               Prelude'.return (\ o -> o{right = v}))
+        parse'top
+         = P'.try
+            (do
+               v <- P'.getT "top"
+               Prelude'.return (\ o -> o{top = v}))
+        parse'bottom
+         = P'.try
+            (do
+               v <- P'.getT "bottom"
+               Prelude'.return (\ o -> o{bottom = v}))

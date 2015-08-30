@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.PrimitiveGroup (PrimitiveGroup(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -13,7 +14,7 @@ import qualified OSM.OSMFormat.Way as OSM.OSMFormat (Way)
  
 data PrimitiveGroup = PrimitiveGroup{nodes :: !(P'.Seq OSM.OSMFormat.Node), dense :: !(P'.Maybe OSM.OSMFormat.DenseNodes),
                                      ways :: !(P'.Seq OSM.OSMFormat.Way), relations :: !(P'.Seq OSM.OSMFormat.Relation),
-                                     changesets :: !(P'.Seq OSM.OSMFormat.ChangeSet), unknown'field :: !P'.UnknownField}
+                                     changesets :: !(P'.Seq OSM.OSMFormat.ChangeSet), unknown'field :: !(P'.UnknownField)}
                     deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage PrimitiveGroup where
@@ -82,3 +83,46 @@ instance P'.ReflectDescriptor PrimitiveGroup where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.PrimitiveGroup\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"PrimitiveGroup\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"PrimitiveGroup.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.PrimitiveGroup.nodes\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"PrimitiveGroup\"], baseName' = FName \"nodes\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Node\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Node\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.PrimitiveGroup.dense\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"PrimitiveGroup\"], baseName' = FName \"dense\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 18}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.DenseNodes\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"DenseNodes\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.PrimitiveGroup.ways\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"PrimitiveGroup\"], baseName' = FName \"ways\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 26}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Way\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Way\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.PrimitiveGroup.relations\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"PrimitiveGroup\"], baseName' = FName \"relations\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Relation\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Relation\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.PrimitiveGroup.changesets\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"PrimitiveGroup\"], baseName' = FName \"changesets\"}, fieldNumber = FieldId {getFieldId = 5}, wireTag = WireTag {getWireTag = 42}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.ChangeSet\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"ChangeSet\"}), hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType PrimitiveGroup where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg PrimitiveGroup where
+  textPut msg
+   = do
+       P'.tellT "nodes" (nodes msg)
+       P'.tellT "dense" (dense msg)
+       P'.tellT "ways" (ways msg)
+       P'.tellT "relations" (relations msg)
+       P'.tellT "changesets" (changesets msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'nodes, parse'dense, parse'ways, parse'relations, parse'changesets]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'nodes
+         = P'.try
+            (do
+               v <- P'.getT "nodes"
+               Prelude'.return (\ o -> o{nodes = P'.append (nodes o) v}))
+        parse'dense
+         = P'.try
+            (do
+               v <- P'.getT "dense"
+               Prelude'.return (\ o -> o{dense = v}))
+        parse'ways
+         = P'.try
+            (do
+               v <- P'.getT "ways"
+               Prelude'.return (\ o -> o{ways = P'.append (ways o) v}))
+        parse'relations
+         = P'.try
+            (do
+               v <- P'.getT "relations"
+               Prelude'.return (\ o -> o{relations = P'.append (relations o) v}))
+        parse'changesets
+         = P'.try
+            (do
+               v <- P'.getT "changesets"
+               Prelude'.return (\ o -> o{changesets = P'.append (changesets o) v}))

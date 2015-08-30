@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.StringTable (StringTable(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -6,7 +7,7 @@ import qualified Data.Typeable as Prelude'
 import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
-data StringTable = StringTable{s :: !(P'.Seq P'.ByteString), unknown'field :: !P'.UnknownField}
+data StringTable = StringTable{s :: !(P'.Seq P'.ByteString), unknown'field :: !(P'.UnknownField)}
                  deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage StringTable where
@@ -60,3 +61,22 @@ instance P'.ReflectDescriptor StringTable where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.StringTable\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"StringTable\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"StringTable.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.StringTable.s\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"StringTable\"], baseName' = FName \"s\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 12}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType StringTable where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg StringTable where
+  textPut msg
+   = do
+       P'.tellT "s" (s msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse's]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse's
+         = P'.try
+            (do
+               v <- P'.getT "s"
+               Prelude'.return (\ o -> o{s = P'.append (s o) v}))

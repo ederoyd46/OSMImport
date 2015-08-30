@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.Info (Info(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -7,7 +8,7 @@ import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
  
 data Info = Info{version :: !(P'.Maybe P'.Int32), timestamp :: !(P'.Maybe P'.Int32), changeset :: !(P'.Maybe P'.Int64),
-                 uid :: !(P'.Maybe P'.Int32), user_sid :: !(P'.Maybe P'.Int32), unknown'field :: !P'.UnknownField}
+                 uid :: !(P'.Maybe P'.Int32), user_sid :: !(P'.Maybe P'.Int32), unknown'field :: !(P'.UnknownField)}
           deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage Info where
@@ -75,3 +76,46 @@ instance P'.ReflectDescriptor Info where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.Info\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Info\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"Info.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Info.version\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Info\"], baseName' = FName \"version\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 8}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Just \"-1\", hsDefault = Just (HsDef'Integer (-1))},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Info.timestamp\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Info\"], baseName' = FName \"timestamp\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 16}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Info.changeset\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Info\"], baseName' = FName \"changeset\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 24}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 3}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Info.uid\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Info\"], baseName' = FName \"uid\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 32}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Info.user_sid\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Info\"], baseName' = FName \"user_sid\"}, fieldNumber = FieldId {getFieldId = 5}, wireTag = WireTag {getWireTag = 40}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType Info where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg Info where
+  textPut msg
+   = do
+       P'.tellT "version" (version msg)
+       P'.tellT "timestamp" (timestamp msg)
+       P'.tellT "changeset" (changeset msg)
+       P'.tellT "uid" (uid msg)
+       P'.tellT "user_sid" (user_sid msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'version, parse'timestamp, parse'changeset, parse'uid, parse'user_sid]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'version
+         = P'.try
+            (do
+               v <- P'.getT "version"
+               Prelude'.return (\ o -> o{version = v}))
+        parse'timestamp
+         = P'.try
+            (do
+               v <- P'.getT "timestamp"
+               Prelude'.return (\ o -> o{timestamp = v}))
+        parse'changeset
+         = P'.try
+            (do
+               v <- P'.getT "changeset"
+               Prelude'.return (\ o -> o{changeset = v}))
+        parse'uid
+         = P'.try
+            (do
+               v <- P'.getT "uid"
+               Prelude'.return (\ o -> o{uid = v}))
+        parse'user_sid
+         = P'.try
+            (do
+               v <- P'.getT "user_sid"
+               Prelude'.return (\ o -> o{user_sid = v}))

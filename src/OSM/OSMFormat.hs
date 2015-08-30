@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat (protoInfo, fileDescriptorProto) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'

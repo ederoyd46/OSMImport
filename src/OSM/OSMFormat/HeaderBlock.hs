@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.HeaderBlock (HeaderBlock(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -11,7 +12,7 @@ data HeaderBlock = HeaderBlock{bbox :: !(P'.Maybe OSM.OSMFormat.HeaderBBox), req
                                optional_features :: !(P'.Seq P'.Utf8), writingprogram :: !(P'.Maybe P'.Utf8),
                                source :: !(P'.Maybe P'.Utf8), osmosis_replication_timestamp :: !(P'.Maybe P'.Int64),
                                osmosis_replication_sequence_number :: !(P'.Maybe P'.Int64),
-                               osmosis_replication_base_url :: !(P'.Maybe P'.Utf8), unknown'field :: !P'.UnknownField}
+                               osmosis_replication_base_url :: !(P'.Maybe P'.Utf8), unknown'field :: !(P'.UnknownField)}
                  deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage HeaderBlock where
@@ -98,3 +99,69 @@ instance P'.ReflectDescriptor HeaderBlock where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.HeaderBlock\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"HeaderBlock\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"HeaderBlock.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.bbox\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"bbox\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.HeaderBBox\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"HeaderBBox\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.required_features\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"required_features\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.optional_features\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"optional_features\"}, fieldNumber = FieldId {getFieldId = 5}, wireTag = WireTag {getWireTag = 42}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = True, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.writingprogram\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"writingprogram\"}, fieldNumber = FieldId {getFieldId = 16}, wireTag = WireTag {getWireTag = 130}, packedTag = Nothing, wireTagLength = 2, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.source\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"source\"}, fieldNumber = FieldId {getFieldId = 17}, wireTag = WireTag {getWireTag = 138}, packedTag = Nothing, wireTagLength = 2, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.osmosis_replication_timestamp\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"osmosis_replication_timestamp\"}, fieldNumber = FieldId {getFieldId = 32}, wireTag = WireTag {getWireTag = 256}, packedTag = Nothing, wireTagLength = 2, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 3}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.osmosis_replication_sequence_number\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"osmosis_replication_sequence_number\"}, fieldNumber = FieldId {getFieldId = 33}, wireTag = WireTag {getWireTag = 264}, packedTag = Nothing, wireTagLength = 2, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 3}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.HeaderBlock.osmosis_replication_base_url\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"HeaderBlock\"], baseName' = FName \"osmosis_replication_base_url\"}, fieldNumber = FieldId {getFieldId = 34}, wireTag = WireTag {getWireTag = 274}, packedTag = Nothing, wireTagLength = 2, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 9}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType HeaderBlock where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg HeaderBlock where
+  textPut msg
+   = do
+       P'.tellT "bbox" (bbox msg)
+       P'.tellT "required_features" (required_features msg)
+       P'.tellT "optional_features" (optional_features msg)
+       P'.tellT "writingprogram" (writingprogram msg)
+       P'.tellT "source" (source msg)
+       P'.tellT "osmosis_replication_timestamp" (osmosis_replication_timestamp msg)
+       P'.tellT "osmosis_replication_sequence_number" (osmosis_replication_sequence_number msg)
+       P'.tellT "osmosis_replication_base_url" (osmosis_replication_base_url msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy
+                (P'.choice
+                  [parse'bbox, parse'required_features, parse'optional_features, parse'writingprogram, parse'source,
+                   parse'osmosis_replication_timestamp, parse'osmosis_replication_sequence_number,
+                   parse'osmosis_replication_base_url])
+                P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'bbox
+         = P'.try
+            (do
+               v <- P'.getT "bbox"
+               Prelude'.return (\ o -> o{bbox = v}))
+        parse'required_features
+         = P'.try
+            (do
+               v <- P'.getT "required_features"
+               Prelude'.return (\ o -> o{required_features = P'.append (required_features o) v}))
+        parse'optional_features
+         = P'.try
+            (do
+               v <- P'.getT "optional_features"
+               Prelude'.return (\ o -> o{optional_features = P'.append (optional_features o) v}))
+        parse'writingprogram
+         = P'.try
+            (do
+               v <- P'.getT "writingprogram"
+               Prelude'.return (\ o -> o{writingprogram = v}))
+        parse'source
+         = P'.try
+            (do
+               v <- P'.getT "source"
+               Prelude'.return (\ o -> o{source = v}))
+        parse'osmosis_replication_timestamp
+         = P'.try
+            (do
+               v <- P'.getT "osmosis_replication_timestamp"
+               Prelude'.return (\ o -> o{osmosis_replication_timestamp = v}))
+        parse'osmosis_replication_sequence_number
+         = P'.try
+            (do
+               v <- P'.getT "osmosis_replication_sequence_number"
+               Prelude'.return (\ o -> o{osmosis_replication_sequence_number = v}))
+        parse'osmosis_replication_base_url
+         = P'.try
+            (do
+               v <- P'.getT "osmosis_replication_base_url"
+               Prelude'.return (\ o -> o{osmosis_replication_base_url = v}))

@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.Relation (Relation(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -8,9 +9,9 @@ import qualified Text.ProtocolBuffers.Header as P'
 import qualified OSM.OSMFormat.Info as OSM.OSMFormat (Info)
 import qualified OSM.OSMFormat.Relation.MemberType as OSM.OSMFormat.Relation (MemberType)
  
-data Relation = Relation{id :: !P'.Int64, keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32),
+data Relation = Relation{id :: !(P'.Int64), keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32),
                          info :: !(P'.Maybe OSM.OSMFormat.Info), roles_sid :: !(P'.Seq P'.Int32), memids :: !(P'.Seq P'.Int64),
-                         types :: !(P'.Seq OSM.OSMFormat.Relation.MemberType), unknown'field :: !P'.UnknownField}
+                         types :: !(P'.Seq OSM.OSMFormat.Relation.MemberType), unknown'field :: !(P'.UnknownField)}
               deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage Relation where
@@ -97,3 +98,59 @@ instance P'.ReflectDescriptor Relation where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.Relation\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Relation\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"Relation.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.id\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"id\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 8}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 3}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.keys\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"keys\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 18}, packedTag = Just (WireTag {getWireTag = 16},WireTag {getWireTag = 18}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.vals\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"vals\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 26}, packedTag = Just (WireTag {getWireTag = 24},WireTag {getWireTag = 26}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.info\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"info\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Info\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Info\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.roles_sid\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"roles_sid\"}, fieldNumber = FieldId {getFieldId = 8}, wireTag = WireTag {getWireTag = 66}, packedTag = Just (WireTag {getWireTag = 64},WireTag {getWireTag = 66}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.memids\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"memids\"}, fieldNumber = FieldId {getFieldId = 9}, wireTag = WireTag {getWireTag = 74}, packedTag = Just (WireTag {getWireTag = 72},WireTag {getWireTag = 74}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Relation.types\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName' = FName \"types\"}, fieldNumber = FieldId {getFieldId = 10}, wireTag = WireTag {getWireTag = 82}, packedTag = Just (WireTag {getWireTag = 80},WireTag {getWireTag = 82}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 14}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Relation.MemberType\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\",MName \"Relation\"], baseName = MName \"MemberType\"}), hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType Relation where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg Relation where
+  textPut msg
+   = do
+       P'.tellT "id" (id msg)
+       P'.tellT "keys" (keys msg)
+       P'.tellT "vals" (vals msg)
+       P'.tellT "info" (info msg)
+       P'.tellT "roles_sid" (roles_sid msg)
+       P'.tellT "memids" (memids msg)
+       P'.tellT "types" (types msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'id, parse'keys, parse'vals, parse'info, parse'roles_sid, parse'memids, parse'types])
+                P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'id
+         = P'.try
+            (do
+               v <- P'.getT "id"
+               Prelude'.return (\ o -> o{id = v}))
+        parse'keys
+         = P'.try
+            (do
+               v <- P'.getT "keys"
+               Prelude'.return (\ o -> o{keys = P'.append (keys o) v}))
+        parse'vals
+         = P'.try
+            (do
+               v <- P'.getT "vals"
+               Prelude'.return (\ o -> o{vals = P'.append (vals o) v}))
+        parse'info
+         = P'.try
+            (do
+               v <- P'.getT "info"
+               Prelude'.return (\ o -> o{info = v}))
+        parse'roles_sid
+         = P'.try
+            (do
+               v <- P'.getT "roles_sid"
+               Prelude'.return (\ o -> o{roles_sid = P'.append (roles_sid o) v}))
+        parse'memids
+         = P'.try
+            (do
+               v <- P'.getT "memids"
+               Prelude'.return (\ o -> o{memids = P'.append (memids o) v}))
+        parse'types
+         = P'.try
+            (do
+               v <- P'.getT "types"
+               Prelude'.return (\ o -> o{types = P'.append (types o) v}))

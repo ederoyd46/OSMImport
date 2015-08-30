@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.DenseNodes (DenseNodes(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -8,7 +9,7 @@ import qualified Text.ProtocolBuffers.Header as P'
 import qualified OSM.OSMFormat.DenseInfo as OSM.OSMFormat (DenseInfo)
  
 data DenseNodes = DenseNodes{id :: !(P'.Seq P'.Int64), denseinfo :: !(P'.Maybe OSM.OSMFormat.DenseInfo), lat :: !(P'.Seq P'.Int64),
-                             lon :: !(P'.Seq P'.Int64), keys_vals :: !(P'.Seq P'.Int32), unknown'field :: !P'.UnknownField}
+                             lon :: !(P'.Seq P'.Int64), keys_vals :: !(P'.Seq P'.Int32), unknown'field :: !(P'.UnknownField)}
                 deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
  
 instance P'.UnknownMessage DenseNodes where
@@ -83,3 +84,46 @@ instance P'.ReflectDescriptor DenseNodes where
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.DenseNodes\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"DenseNodes\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"DenseNodes.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.DenseNodes.id\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"DenseNodes\"], baseName' = FName \"id\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 10}, packedTag = Just (WireTag {getWireTag = 8},WireTag {getWireTag = 10}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.DenseNodes.denseinfo\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"DenseNodes\"], baseName' = FName \"denseinfo\"}, fieldNumber = FieldId {getFieldId = 5}, wireTag = WireTag {getWireTag = 42}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.DenseInfo\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"DenseInfo\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.DenseNodes.lat\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"DenseNodes\"], baseName' = FName \"lat\"}, fieldNumber = FieldId {getFieldId = 8}, wireTag = WireTag {getWireTag = 66}, packedTag = Just (WireTag {getWireTag = 64},WireTag {getWireTag = 66}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.DenseNodes.lon\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"DenseNodes\"], baseName' = FName \"lon\"}, fieldNumber = FieldId {getFieldId = 9}, wireTag = WireTag {getWireTag = 74}, packedTag = Just (WireTag {getWireTag = 72},WireTag {getWireTag = 74}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.DenseNodes.keys_vals\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"DenseNodes\"], baseName' = FName \"keys_vals\"}, fieldNumber = FieldId {getFieldId = 10}, wireTag = WireTag {getWireTag = 82}, packedTag = Just (WireTag {getWireTag = 80},WireTag {getWireTag = 82}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 5}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType DenseNodes where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg DenseNodes where
+  textPut msg
+   = do
+       P'.tellT "id" (id msg)
+       P'.tellT "denseinfo" (denseinfo msg)
+       P'.tellT "lat" (lat msg)
+       P'.tellT "lon" (lon msg)
+       P'.tellT "keys_vals" (keys_vals msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'id, parse'denseinfo, parse'lat, parse'lon, parse'keys_vals]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'id
+         = P'.try
+            (do
+               v <- P'.getT "id"
+               Prelude'.return (\ o -> o{id = P'.append (id o) v}))
+        parse'denseinfo
+         = P'.try
+            (do
+               v <- P'.getT "denseinfo"
+               Prelude'.return (\ o -> o{denseinfo = v}))
+        parse'lat
+         = P'.try
+            (do
+               v <- P'.getT "lat"
+               Prelude'.return (\ o -> o{lat = P'.append (lat o) v}))
+        parse'lon
+         = P'.try
+            (do
+               v <- P'.getT "lon"
+               Prelude'.return (\ o -> o{lon = P'.append (lon o) v}))
+        parse'keys_vals
+         = P'.try
+            (do
+               v <- P'.getT "keys_vals"
+               Prelude'.return (\ o -> o{keys_vals = P'.append (keys_vals o) v}))

@@ -2,7 +2,7 @@ name:                OSMImport
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             2.0.0.1
+version:             2.0.0.2
 synopsis:            Application to import the Open Street Map Protocol Buffer format into MongoDB
 license:             MIT
 license-file:        LICENSE
@@ -32,7 +32,7 @@ Executable OSMImport
     MissingH >= 1.3.0.1
 
   -- ghc-options: -O2 -auto-all -rtsopts -with-rtsopts=-H4096m -threaded
-  ghc-options: -O2 -rtsopts
+  ghc-options: -O2 -rtsopts -threaded
 
   default-language: Haskell2010
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 module OSM.OSMFormat.Way (Way(..)) where
 import Prelude ((+), (/))
 import qualified Prelude as Prelude'
@@ -6,24 +7,24 @@ import qualified Data.Typeable as Prelude'
 import qualified Data.Data as Prelude'
 import qualified Text.ProtocolBuffers.Header as P'
 import qualified OSM.OSMFormat.Info as OSM.OSMFormat (Info)
-
-data Way = Way{id :: !P'.Int64, keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32), info :: !(P'.Maybe OSM.OSMFormat.Info),
-               refs :: !(P'.Seq P'.Int64), unknown'field :: !P'.UnknownField}
+ 
+data Way = Way{id :: !(P'.Int64), keys :: !(P'.Seq P'.Word32), vals :: !(P'.Seq P'.Word32), info :: !(P'.Maybe OSM.OSMFormat.Info),
+               refs :: !(P'.Seq P'.Int64), unknown'field :: !(P'.UnknownField)}
          deriving (Prelude'.Show, Prelude'.Eq, Prelude'.Ord, Prelude'.Typeable, Prelude'.Data)
-
+ 
 instance P'.UnknownMessage Way where
   getUnknownField = unknown'field
   putUnknownField u'f msg = msg{unknown'field = u'f}
-
+ 
 instance P'.Mergeable Way where
   mergeAppend (Way x'1 x'2 x'3 x'4 x'5 x'6) (Way y'1 y'2 y'3 y'4 y'5 y'6)
    = Way (P'.mergeAppend x'1 y'1) (P'.mergeAppend x'2 y'2) (P'.mergeAppend x'3 y'3) (P'.mergeAppend x'4 y'4)
       (P'.mergeAppend x'5 y'5)
       (P'.mergeAppend x'6 y'6)
-
+ 
 instance P'.Default Way where
   defaultValue = Way P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue P'.defaultValue
-
+ 
 instance P'.Wire Way where
   wireSize ft' self'@(Way x'1 x'2 x'3 x'4 x'5 x'6)
    = case ft' of
@@ -69,14 +70,57 @@ instance P'.Wire Way where
              64 -> Prelude'.fmap (\ !new'Field -> old'Self{refs = P'.append (refs old'Self) new'Field}) (P'.wireGet 18)
              66 -> Prelude'.fmap (\ !new'Field -> old'Self{refs = P'.mergeAppend (refs old'Self) new'Field}) (P'.wireGetPacked 18)
              _ -> let (field'Number, wire'Type) = P'.splitWireTag wire'Tag in P'.unknown field'Number wire'Type old'Self
-
+ 
 instance P'.MessageAPI msg' (msg' -> Way) Way where
   getVal m' f' = f' m'
-
+ 
 instance P'.GPB Way
-
+ 
 instance P'.ReflectDescriptor Way where
   getMessageInfo _ = P'.GetMessageInfo (P'.fromDistinctAscList [8]) (P'.fromDistinctAscList [8, 16, 18, 24, 26, 34, 64, 66])
   reflectDescriptorInfo _
    = Prelude'.read
       "DescriptorInfo {descName = ProtoName {protobufName = FIName \".Osmformat.Way\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Way\"}, descFilePath = [\"OSM\",\"OSMFormat\",\"Way.hs\"], isGroup = False, fields = fromList [FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Way.id\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Way\"], baseName' = FName \"id\"}, fieldNumber = FieldId {getFieldId = 1}, wireTag = WireTag {getWireTag = 8}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = True, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 3}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Way.keys\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Way\"], baseName' = FName \"keys\"}, fieldNumber = FieldId {getFieldId = 2}, wireTag = WireTag {getWireTag = 18}, packedTag = Just (WireTag {getWireTag = 16},WireTag {getWireTag = 18}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Way.vals\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Way\"], baseName' = FName \"vals\"}, fieldNumber = FieldId {getFieldId = 3}, wireTag = WireTag {getWireTag = 26}, packedTag = Just (WireTag {getWireTag = 24},WireTag {getWireTag = 26}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 13}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Way.info\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Way\"], baseName' = FName \"info\"}, fieldNumber = FieldId {getFieldId = 4}, wireTag = WireTag {getWireTag = 34}, packedTag = Nothing, wireTagLength = 1, isPacked = False, isRequired = False, canRepeat = False, mightPack = False, typeCode = FieldType {getFieldType = 11}, typeName = Just (ProtoName {protobufName = FIName \".Osmformat.Info\", haskellPrefix = [], parentModule = [MName \"OSM\",MName \"OSMFormat\"], baseName = MName \"Info\"}), hsRawDefault = Nothing, hsDefault = Nothing},FieldInfo {fieldName = ProtoFName {protobufName' = FIName \".Osmformat.Way.refs\", haskellPrefix' = [], parentModule' = [MName \"OSM\",MName \"OSMFormat\",MName \"Way\"], baseName' = FName \"refs\"}, fieldNumber = FieldId {getFieldId = 8}, wireTag = WireTag {getWireTag = 66}, packedTag = Just (WireTag {getWireTag = 64},WireTag {getWireTag = 66}), wireTagLength = 1, isPacked = True, isRequired = False, canRepeat = True, mightPack = True, typeCode = FieldType {getFieldType = 18}, typeName = Nothing, hsRawDefault = Nothing, hsDefault = Nothing}], keys = fromList [], extRanges = [], knownKeys = fromList [], storeUnknown = True, lazyFields = False}"
+ 
+instance P'.TextType Way where
+  tellT = P'.tellSubMessage
+  getT = P'.getSubMessage
+ 
+instance P'.TextMsg Way where
+  textPut msg
+   = do
+       P'.tellT "id" (id msg)
+       P'.tellT "keys" (keys msg)
+       P'.tellT "vals" (vals msg)
+       P'.tellT "info" (info msg)
+       P'.tellT "refs" (refs msg)
+  textGet
+   = do
+       mods <- P'.sepEndBy (P'.choice [parse'id, parse'keys, parse'vals, parse'info, parse'refs]) P'.spaces
+       Prelude'.return (Prelude'.foldl (\ v f -> f v) P'.defaultValue mods)
+    where
+        parse'id
+         = P'.try
+            (do
+               v <- P'.getT "id"
+               Prelude'.return (\ o -> o{id = v}))
+        parse'keys
+         = P'.try
+            (do
+               v <- P'.getT "keys"
+               Prelude'.return (\ o -> o{keys = P'.append (keys o) v}))
+        parse'vals
+         = P'.try
+            (do
+               v <- P'.getT "vals"
+               Prelude'.return (\ o -> o{vals = P'.append (vals o) v}))
+        parse'info
+         = P'.try
+            (do
+               v <- P'.getT "info"
+               Prelude'.return (\ o -> o{info = v}))
+        parse'refs
+         = P'.try
+            (do
+               v <- P'.getT "refs"
+               Prelude'.return (\ o -> o{refs = P'.append (refs o) v}))
