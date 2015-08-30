@@ -25,7 +25,6 @@ start_mongo:
 run_in_docker:
 	docker run -it -rm -v `pwd`:/project -w /project/src haskell:geo-index ghci Importer.hs
 
-
 build_in_docker:
 	docker build --rm=true .
 
@@ -45,7 +44,6 @@ cabal-install:
 
 cabal-sandbox-init:
 	cabal sandbox init --sandbox $(CABAL_SANDBOX)
-	cabal sandbox add-source $(BASE_DIR)/patches/protocol-buffers-2.0.17
 	cabal install --only-dependencies --force-reinstalls
 
 cabal-docs:
@@ -61,7 +59,7 @@ test-data:
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
 
 test-mongo:
-	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' 
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf'
 	#+RTS -N2 -RTS -- Added to end to make use of multicores
 
 kill:
