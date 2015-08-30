@@ -23,10 +23,10 @@ start_mongo:
 	docker run -d -v $(BASE_DIR)/data:/data/db -p 27017:27017 mongo
 
 run_in_docker:
-	docker run -it -rm -v `pwd`:/project -w /project/src haskell:geo-index ghci Importer.hs
+	docker run -it -rm -v `pwd`:/project -w /project/src ederoyd46/osmimport ghci Importer.hs
 
 build_in_docker:
-	docker build --rm=true .
+	docker build --tag="ederoyd46/osmimport" --rm=true .
 
 # Cabal ######################################################################################
 
