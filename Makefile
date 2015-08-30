@@ -50,12 +50,21 @@ cabal-ghci:
 
 ##############################################################################################
 
-test-data:
+download-uk-data:
 	mkdir -p $(BASE_DIR)/download
 	curl -C - http://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf > $(BASE_DIR)/download/england-latest.osm.pbf
 
-test-mongo:
-	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data' '$(BASE_DIR)/download/england-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
+import-uk-data:
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data_uk' '$(BASE_DIR)/download/england-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
+
+
+download-de-data:
+	mkdir -p $(BASE_DIR)/download
+	curl -C - http://download.geofabrik.de/europe/germany-latest.osm.pbf > $(BASE_DIR)/download/germany-latest.osm.pbf
+
+import-de-data:
+	$(BASE_DIR)/dist/build/OSMImport/OSMImport '127.0.0.1:27017' 'geo_data_de' '$(BASE_DIR)/download/germany-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
+
 
 kill:
 	killall OSMImport
