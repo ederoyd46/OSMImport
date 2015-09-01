@@ -1,14 +1,4 @@
+.stack-work
 dist
 download
-platform
-*.log
-.DS_Store
-._*
-.cabal-sandbox
-cabal.sandbox.config
 tags
-RELEASE
-*.pbf
-.hdevtools.sock
-bin
-BUILD
