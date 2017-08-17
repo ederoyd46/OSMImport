@@ -8,18 +8,23 @@ module Database where
   import qualified Data.Relation as R
   import Database.MongoDB
   import qualified Data.Text as T
+  import Control.Monad.IO.Class
  
-  runDBCommand :: String -> String -> Action IO a -> IO ()  
-  runDBCommand dbconnection dbname command = do
-    pipe <- connect (readHostPort dbconnection)
-    _ <- access pipe master (T.pack dbname) command
+  openConnection :: String -> IO Pipe
+  openConnection dbconnection =
+    connect $ readHostPort dbconnection
+
+  runDBCommand :: MonadIO m => Pipe -> String -> Action m a -> m a
+  runDBCommand pipe dbname command = do
+    access pipe master (T.pack dbname) command
+
+  closeConnection :: Pipe -> IO ()
+  closeConnection pipe = 
     close pipe
 
-  saveNodes :: String -> String -> [N.ImportNode] -> IO ()
-  saveNodes dbconnection dbname nodes = do
-    let insertNodes = insertMany "node" (parseNodes nodes)
-    runDBCommand dbconnection dbname insertNodes
-
+  saveNodes :: Pipe -> String -> [N.ImportNode] -> IO ()
+  saveNodes pipe dbname nodes = do
+    runDBCommand pipe dbname $ insertMany_ "node" (parseNodes nodes)
     where
       parseNodes [] = []
       parseNodes (x:xs) = [ "_id" =: (N._id x)
@@ -33,11 +38,9 @@ module Database where
                           , "user" =: (N.sid x)
                           ] : parseNodes xs
 
-
-  saveWays :: String -> String -> [W.ImportWay] -> IO ()
-  saveWays dbconnection dbname ways = do
-    let insertWays = insertMany "way" (parseWays ways)
-    runDBCommand dbconnection dbname insertWays
+  saveWays :: Pipe -> String -> [W.ImportWay] -> IO ()
+  saveWays pipe dbname ways = do
+    runDBCommand pipe dbname $ insertMany_ "way" (parseWays ways)
     where
       parseWays [] = []
       parseWays (x:xs) = [ "_id" =: (W._id x)
@@ -49,11 +52,10 @@ module Database where
                           , "user" =: (W.user x)
                           , "nodes" =: (W.nodes x)
                           ] : parseWays xs
-
-  saveRelation :: String -> String -> [R.ImportRelation] -> IO ()
-  saveRelation dbconnection dbname nodes = do
-    let insertRelation = insertMany "relation" (parseRelation nodes)
-    runDBCommand dbconnection dbname insertRelation
+                                                 
+  saveRelation :: Pipe -> String -> [R.ImportRelation] -> IO ()
+  saveRelation pipe dbname nodes = do
+    runDBCommand pipe dbname $ insertMany_ "relation" (parseRelation nodes)
     where
       parseRelation [] = []
       parseRelation (x:xs) = [ "_id" =: (R._id x)
@@ -64,7 +66,7 @@ module Database where
                           , "user" =: (R.user x)
                           , "members" =: (parseTags (R.members x))
                           ] : parseRelation xs
-
+  
+  parseTags :: [ImportTag] -> [Field]
   parseTags [] = []
   parseTags (x:xs) = ((T.pack $ Data.Tag.key x) =: (Data.Tag.value x)) : parseTags xs
-

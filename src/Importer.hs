@@ -1,16 +1,14 @@
  {-# LANGUAGE OverloadedStrings #-}
  {-# LANGUAGE FlexibleContexts #-}
-
+ 
 module Importer where
 
-import Control.Concurrent (forkIO, newEmptyMVar, takeMVar, putMVar)
-import Control.Monad (forever, when)
+import Control.Monad (when)
 import Data.Binary.Get (Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib (decompress)
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import qualified Data.ByteString.Lazy as BL (readFile, length, ByteString)
-import Data.List.Split (splitOn)
 import Data.String.Utils (replace)
 import Text.ProtocolBuffers.Basic(ByteString,uToString)
 import qualified Data.Foldable as F(toList)
@@ -22,7 +20,7 @@ import qualified Data.Node as N
 import Data.Tag
 import qualified Data.Way as W
 import qualified Data.Relation as R
-import qualified Database as MDB (saveNodes,saveWays,saveRelation)
+import qualified Database as MDB (openConnection,closeConnection,saveNodes,saveWays,saveRelation)
 
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -55,13 +53,12 @@ getChunks limit location chunks
 
 startImport :: String -> String -> String -> IO ()
 startImport dbconnection dbname filename = do
-  let host = (splitOn ":" dbconnection) !! 0
-  let port = read ((splitOn ":" dbconnection) !! 1) :: Int
-  let dbNodecommand recs = MDB.saveNodes dbconnection dbname recs
-  let dbWaycommand recs = MDB.saveWays dbconnection dbname recs
-  let dbRelationcommand recs = MDB.saveRelation dbconnection dbname recs
+  pipe <- MDB.openConnection dbconnection
+  let dbNodecommand recs = MDB.saveNodes pipe dbname recs
+  let dbWaycommand recs = MDB.saveWays pipe dbname recs
+  let dbRelationcommand recs = MDB.saveRelation pipe dbname recs
   performImport filename dbNodecommand dbWaycommand dbRelationcommand
-
+  MDB.closeConnection pipe
 
 performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> ([R.ImportRelation] -> IO ()) -> IO ()
 performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
@@ -69,7 +66,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
   let fileLength = fromIntegral $ BL.length handle
   let chunks = runGet (getChunks fileLength (0 :: Integer) []) handle
   putStrLn $ "File Length : [" ++ (show fileLength) ++ "] Contains: [" ++ (show (length chunks)) ++ "] chunks"
-  processData chunks 1
+  processData chunks (0 :: Integer)
     where
       processData [] _ = return ()
       processData (x:xs) count = do
@@ -94,7 +91,9 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             entryCount <- primitiveGroups pg st gran 0
             putStrLn $ "Chunk : [" ++ (show count) ++ "] Entries parsed = [" ++ (show entryCount) ++ "]"
             processData xs (count + 1)
-
+          _ -> do
+            putStrLn $ "Chunk : [" ++ (show count) ++ "] not valid"
+            processData xs (count + 1)
 
       -- Primitive Groups
       primitiveGroups [] _ _ count = return count
@@ -213,7 +212,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
               splitKeyVal (x:xx:xs) y
                 | x == 0 = (y, (xx : xs))
                 | otherwise = splitKeyVal xs (ImportTag (fixIllegalFieldName $ st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
-              splitKeyVal (x:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
+              splitKeyVal (_:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
 
 
           lookupKeyVals :: [Int] -> [Int] -> [ImportTag]

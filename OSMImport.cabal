@@ -31,12 +31,9 @@ Executable OSMImport
     utf8-string,
     MissingH
 
-  -- ghc-options: -O2 -auto-all -rtsopts -with-rtsopts=-H4096m -threaded
-  ghc-options: -rtsopts -threaded
-
   default-language: Haskell2010
 
-  -- default-extensions: DeriveGeneric
+
 
   -- Modules not exported by this package.
   Other-modules:
@@ -63,4 +60,4 @@ Executable OSMImport
     OSM.OSMFormat.StringTable
     OSM.OSMFormat.Way
 
-  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
+  
