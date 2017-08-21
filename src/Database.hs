@@ -1,15 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database where
-  
-  import qualified Data.Node as N
-  import Data.Tag
-  import qualified Data.Way as W
-  import qualified Data.Relation as R
-  import Database.MongoDB
+  import Types
+  import Database.MongoDB hiding(timestamp)
   import qualified Data.Text as T
   import Control.Monad.IO.Class
- 
+
   openConnection :: String -> IO Pipe
   openConnection dbconnection =
     connect $ readHostPort dbconnection
@@ -22,51 +18,54 @@ module Database where
   closeConnection pipe = 
     close pipe
 
-  saveNodes :: Pipe -> String -> [N.ImportNode] -> IO ()
+  saveNodes :: Pipe -> String -> [ImportNode] -> IO ()
   saveNodes pipe dbname nodes = do
     runDBCommand pipe dbname $ insertMany_ "node" (parseNodes nodes)
     where
       parseNodes [] = []
-      parseNodes (x:xs) = [ "_id" =: (N._id x)
-                          , "latitude" =: (N.latitude x)
-                          , "longitude" =: (N.longitude x)
-                          , "tags" =: (parseTags (N.tags x))
-                          , "version" =: (N.version x)
-                          , "timestamp" =: (N.timestamp x)
-                          , "changeset" =: (N.changeset x)
-                          , "uid" =: (N.uid x)
-                          , "user" =: (N.sid x)
-                          ] : parseNodes xs
+      parseNodes (ImportNode nodeId latitude longitude tags version timestamp changeset uid sid :xs) 
+                        = [ "_id" =: nodeId
+                          , "latitude" =: latitude
+                          , "longitude" =: longitude
+                          , "tags" =: parseTags tags
+                          , "version" =: version
+                          , "timestamp" =: timestamp
+                          , "changeset" =: changeset
+                          , "uid" =: uid
+                          , "user" =: sid
+                        ] : parseNodes xs
 
-  saveWays :: Pipe -> String -> [W.ImportWay] -> IO ()
+  saveWays :: Pipe -> String -> [ImportWay] -> IO ()
   saveWays pipe dbname ways = do
     runDBCommand pipe dbname $ insertMany_ "way" (parseWays ways)
     where
       parseWays [] = []
-      parseWays (x:xs) = [ "_id" =: (W._id x)
-                          , "tags" =: (parseTags (W.tags x))
-                          , "version" =: (W.version x)
-                          , "timestamp" =: (W.timestamp x)
-                          , "changeset" =: (W.changeset x)
-                          , "uid" =: (W.uid x)
-                          , "user" =: (W.user x)
-                          , "nodes" =: (W.nodes x)
-                          ] : parseWays xs
+      parseWays (ImportWay wayId tags version timestamp changeset uid user nodes :xs) 
+                        = [ "_id" =: wayId
+                          , "tags" =: parseTags tags
+                          , "version" =: version
+                          , "timestamp" =: timestamp
+                          , "changeset" =: changeset
+                          , "uid" =: uid
+                          , "user" =: user
+                          , "nodes" =: nodes
+                        ] : parseWays xs
                                                  
-  saveRelation :: Pipe -> String -> [R.ImportRelation] -> IO ()
-  saveRelation pipe dbname nodes = do
-    runDBCommand pipe dbname $ insertMany_ "relation" (parseRelation nodes)
+  saveRelation :: Pipe -> String -> [ImportRelation] -> IO ()
+  saveRelation pipe dbname relations = do
+    runDBCommand pipe dbname $ insertMany_ "relation" (parseRelations relations)
     where
-      parseRelation [] = []
-      parseRelation (x:xs) = [ "_id" =: (R._id x)
-                          , "tags" =: (parseTags (R.tags x))
-                          , "version" =: (R.version x)
-                          , "timestamp" =: (R.timestamp x)
-                          , "changeset" =: (R.changeset x)
-                          , "user" =: (R.user x)
-                          , "members" =: (parseTags (R.members x))
-                          ] : parseRelation xs
+      parseRelations [] = []
+      parseRelations (ImportRelation relationId tags version timestamp changeset user members :xs) 
+                        = [ "_id" =: relationId
+                          , "tags" =: parseTags tags
+                          , "version" =: version
+                          , "timestamp" =: timestamp
+                          , "changeset" =: changeset
+                          , "user" =: user
+                          , "members" =: parseTags members
+                        ] : parseRelations xs
   
   parseTags :: [ImportTag] -> [Field]
   parseTags [] = []
-  parseTags (x:xs) = ((T.pack $ Data.Tag.key x) =: (Data.Tag.value x)) : parseTags xs
+  parseTags (ImportTag k v:xs) = ((T.pack $ k) =: v) : parseTags xs

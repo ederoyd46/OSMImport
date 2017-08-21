@@ -38,10 +38,7 @@ Executable OSMImport
   -- Modules not exported by this package.
   Other-modules:
     Common
-    Data.Node
-    Data.Relation
-    Data.Tag
-    Data.Way
+    Types
     Database
     Importer
     OSM.FileFormat.Blob
@@ -59,5 +56,3 @@ Executable OSMImport
     OSM.OSMFormat.Relation.MemberType
     OSM.OSMFormat.StringTable
     OSM.OSMFormat.Way
-
-  

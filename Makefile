@@ -20,6 +20,6 @@ clean-generated-protocol-buffers:
 	@rm -r $(BASE_DIR)/src/OSM
 
 # import-uk-data:
-# 	OSMImport '127.0.0.1:27017' 'geo_data_uk' '$(BASE_DIR)/download/england-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
+# 	OSMImport '127.0.0.1:27017' 'geo_data_uk' '$(BASE_DIR)/download/england-latest.osm.pbf' 
 # import-de-data:
-# 	OSMImport '127.0.0.1:27017' 'geo_data_de' '$(BASE_DIR)/download/germany-latest.osm.pbf' +RTS -N4 -RTS # Added to end to make use of multicores
+# 	OSMImport '127.0.0.1:27017' 'geo_data_de' '$(BASE_DIR)/download/germany-latest.osm.pbf'

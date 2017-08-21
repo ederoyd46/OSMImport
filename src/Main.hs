@@ -4,7 +4,6 @@ import Importer
 import Control.Monad(when)
 import System.Environment
 
-
 main :: IO ()
 main =  do 
   args <- getArgs
@@ -15,4 +14,3 @@ main =  do
   let filename = args !! 2
   startImport dbconnection dbname filename
   return ()
-

@@ -16,11 +16,8 @@ import qualified Data.ByteString.Lazy.UTF8 as U (toString)
 import Text.ProtocolBuffers (messageGet,getVal)
 
 import Common(nano,deltaDecode,calculateDegrees)
-import qualified Data.Node as N
-import Data.Tag
-import qualified Data.Way as W
-import qualified Data.Relation as R
 import qualified Database as MDB (openConnection,closeConnection,saveNodes,saveWays,saveRelation)
+import Types
 
 import OSM.FileFormat.Blob
 import OSM.FileFormat.BlockHeader
@@ -60,7 +57,7 @@ startImport dbconnection dbname filename = do
   performImport filename dbNodecommand dbWaycommand dbRelationcommand
   MDB.closeConnection pipe
 
-performImport :: FilePath -> ([N.ImportNode] -> IO ()) -> ([W.ImportWay] -> IO ()) -> ([R.ImportRelation] -> IO ()) -> IO ()
+performImport :: FilePath -> ([ImportNode] -> IO ()) -> ([ImportWay] -> IO ()) -> ([ImportRelation] -> IO ()) -> IO ()
 performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
   handle <- BL.readFile fileName
   let fileLength = fromIntegral $ BL.length handle
@@ -112,12 +109,12 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
         let newCount = count + (length impNodes) + (length impWays) + (length impRelations)
         primitiveGroups xs st gran newCount
         where
-          parseImpRelations :: [Relation] -> [R.ImportRelation]
+          parseImpRelations :: [Relation] -> [ImportRelation]
           parseImpRelations [] = []
           parseImpRelations (x:xs) = do
             buildImpRelation x : parseImpRelations xs
             where
-              buildImpRelation :: Relation -> R.ImportRelation
+              buildImpRelation :: Relation -> ImportRelation
               buildImpRelation pgRelation = do
                 let id = fromIntegral (getVal pgRelation OSM.OSMFormat.Relation.id)
                 let keys = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.keys)
@@ -125,25 +122,25 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                 let info = (getVal pgRelation OSM.OSMFormat.Relation.info)
                 let types = map show $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.types)
                 let memids = deltaDecode (map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids)) 0
-                R.ImportRelation { R._id=id
-                            , R.tags=(lookupKeyVals keys vals)
-                            , R.version=fromIntegral (getVal info OSM.OSMFormat.Info.version)
-                            , R.timestamp=fromIntegral (getVal info OSM.OSMFormat.Info.timestamp)
-                            , R.changeset=fromIntegral (getVal info OSM.OSMFormat.Info.changeset)
-                            , R.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
-                            , R.members=buildRelationTags types memids
-                          }
+                ImportRelation id
+                              (lookupKeyVals keys vals)
+                              (fromIntegral (getVal info OSM.OSMFormat.Info.version))
+                              (fromIntegral (getVal info OSM.OSMFormat.Info.timestamp))
+                              (fromIntegral (getVal info OSM.OSMFormat.Info.changeset))
+                              (st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
+                              (buildRelationTags types memids)
+
                   where
                     buildRelationTags :: [String] -> [Int] -> [ImportTag]
                     buildRelationTags [] [] = []
                     buildRelationTags (x:xs) (y:ys) = ImportTag x (show y) : buildRelationTags xs ys
 
-          parseImpWays :: [Way] -> [W.ImportWay]
+          parseImpWays :: [Way] -> [ImportWay]
           parseImpWays [] = []
           parseImpWays (x:xs) = do
             buildImpWay x : parseImpWays xs
             where
-              buildImpWay :: Way -> W.ImportWay
+              buildImpWay :: Way -> ImportWay
               buildImpWay pgWay = do
                 let id = fromIntegral (getVal pgWay OSM.OSMFormat.Way.id)
                 let keys = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.keys)
@@ -151,16 +148,16 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                 let refs = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.refs)
                 let info = (getVal pgWay OSM.OSMFormat.Way.info)
                 let deltaRefs = deltaDecode refs 0
-                W.ImportWay { W._id=id
-                            , W.tags=(lookupKeyVals keys vals)
-                            , W.version=fromIntegral (getVal info OSM.OSMFormat.Info.version)
-                            , W.timestamp=fromIntegral (getVal info OSM.OSMFormat.Info.timestamp)
-                            , W.changeset=fromIntegral (getVal info OSM.OSMFormat.Info.changeset)
-                            , W.uid=fromIntegral (getVal info OSM.OSMFormat.Info.uid)
-                            , W.user=(st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
-                            , W.nodes=deltaRefs}
+                ImportWay id
+                          (lookupKeyVals keys vals)
+                          (fromIntegral (getVal info OSM.OSMFormat.Info.version))
+                          (fromIntegral (getVal info OSM.OSMFormat.Info.timestamp))
+                          (fromIntegral (getVal info OSM.OSMFormat.Info.changeset))
+                          (fromIntegral (getVal info OSM.OSMFormat.Info.uid))
+                          (st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
+                          deltaRefs
 
-          denseNodes :: DenseNodes -> [N.ImportNode]
+          denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do
             let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
             let latitudes = map fromIntegral $ F.toList (getVal d lat)
@@ -174,7 +171,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
             buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
 
-          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [N.ImportNode]
+          buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
             let identifiers = deltaDecode ids 0
             let latitudes = calculateDegrees (deltaDecode lat 0) gran
@@ -186,21 +183,21 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
 
             buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers
 
-          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [N.ImportNode]
+          buildNodes :: [Integer] -> [Float] -> [Float] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodes [] [] [] [] [] [] [] [] [] = []
           buildNodes (id:ids) (lat:lats) (long:longs) keyvals (ver:versions) (ts:timestamps) (cs:changesets) (uid:uids) (sid:sids) =
-                          N.ImportNodeFull {  N._id=id
-                                            , N.latitude=lat
-                                            , N.longitude=long
-                                            , N.tags=(fst $ lookupMixedKeyVals keyvals)
-                                            , N.version=ver
-                                            , N.timestamp=ts
-                                            , N.changeset=cs
-                                            , N.uid=uid
-                                            , N.sid=(st !! (fromIntegral sid :: Int))
-                                          } : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
-          buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
-                          N.ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
+                          ImportNode id
+                                     lat
+                                     long
+                                     (fst $ lookupMixedKeyVals keyvals)
+                                     ver
+                                     ts
+                                     cs
+                                     uid
+                                     (st !! (fromIntegral sid :: Int))
+                                    : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
+          -- buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
+          --                 N.ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
 
 
           lookupMixedKeyVals :: [Integer] -> ([ImportTag], [Integer])
