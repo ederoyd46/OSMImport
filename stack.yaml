@@ -4,5 +4,5 @@ packages:
 extra-deps: []
 resolver: lts-9.1
 nix:
-  enable: true
+  enable: false
   packages: [glpk pcre zlib binutils protobuf]
