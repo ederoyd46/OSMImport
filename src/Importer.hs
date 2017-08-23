@@ -47,7 +47,6 @@ getChunks limit location chunks
     getChunks limit location' ((Chunk blobHeader blob') : chunks)
  | otherwise = return $ reverse chunks
 
-
 startImport :: String -> String -> String -> IO ()
 startImport dbconnection dbname filename = do
   pipe <- MDB.openConnection dbconnection
@@ -82,7 +81,7 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             processData xs (count + 1)
           "OSMData" -> do
             let Right (primitiveBlock, _) = messageGet blobUncompressed :: Either String (PrimitiveBlock, BL.ByteString)
-            let st = map U.toString $ F.toList $ getVal (getVal primitiveBlock stringtable) s
+            let st = map U.toString . F.toList $ getVal (getVal primitiveBlock stringtable) s
             let gran = fromIntegral $ getVal primitiveBlock granularity
             let pg = F.toList $ getVal primitiveBlock primitivegroup
             entryCount <- primitiveGroups pg st gran 0
@@ -116,17 +115,17 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             where
               buildImpRelation :: Relation -> ImportRelation
               buildImpRelation pgRelation = do
-                let id = fromIntegral (getVal pgRelation OSM.OSMFormat.Relation.id)
+                let id = toInteger (getVal pgRelation OSM.OSMFormat.Relation.id)
                 let keys = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.keys)
                 let vals = map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.vals)
                 let info = (getVal pgRelation OSM.OSMFormat.Relation.info)
                 let types = map show $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.types)
-                let memids = deltaDecode (map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids)) 0
+                let memids = deltaDecode (map fromIntegral $ F.toList (getVal pgRelation OSM.OSMFormat.Relation.memids))
                 ImportRelation id
                               (lookupKeyVals keys vals)
-                              (fromIntegral (getVal info OSM.OSMFormat.Info.version))
-                              (fromIntegral (getVal info OSM.OSMFormat.Info.timestamp))
-                              (fromIntegral (getVal info OSM.OSMFormat.Info.changeset))
+                              (toInteger (getVal info OSM.OSMFormat.Info.version))
+                              (toInteger (getVal info OSM.OSMFormat.Info.timestamp))
+                              (toInteger (getVal info OSM.OSMFormat.Info.changeset))
                               (st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
                               (buildRelationTags types memids)
 
@@ -142,44 +141,44 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
             where
               buildImpWay :: Way -> ImportWay
               buildImpWay pgWay = do
-                let id = fromIntegral (getVal pgWay OSM.OSMFormat.Way.id)
+                let id = toInteger (getVal pgWay OSM.OSMFormat.Way.id)
                 let keys = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.keys)
                 let vals = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.vals)
-                let refs = map fromIntegral $ F.toList (getVal pgWay OSM.OSMFormat.Way.refs)
+                let refs = map toInteger $ F.toList (getVal pgWay OSM.OSMFormat.Way.refs)
                 let info = (getVal pgWay OSM.OSMFormat.Way.info)
-                let deltaRefs = deltaDecode refs 0
+                let deltaRefs = deltaDecode refs
                 ImportWay id
                           (lookupKeyVals keys vals)
-                          (fromIntegral (getVal info OSM.OSMFormat.Info.version))
-                          (fromIntegral (getVal info OSM.OSMFormat.Info.timestamp))
-                          (fromIntegral (getVal info OSM.OSMFormat.Info.changeset))
-                          (fromIntegral (getVal info OSM.OSMFormat.Info.uid))
+                          (toInteger (getVal info OSM.OSMFormat.Info.version))
+                          (toInteger (getVal info OSM.OSMFormat.Info.timestamp))
+                          (toInteger (getVal info OSM.OSMFormat.Info.changeset))
+                          (toInteger (getVal info OSM.OSMFormat.Info.uid))
                           (st !! (fromIntegral (getVal info OSM.OSMFormat.Info.user_sid) :: Int))
                           deltaRefs
 
           denseNodes :: DenseNodes -> [ImportNode]
           denseNodes d = do
-            let ids = map fromIntegral $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
-            let latitudes = map fromIntegral $ F.toList (getVal d lat)
-            let longitudes = map fromIntegral $ F.toList (getVal d lon)
-            let keyvals = map fromIntegral $ F.toList (getVal d keys_vals)
+            let ids = map toInteger $ F.toList (getVal d OSM.OSMFormat.DenseNodes.id)
+            let latitudes = map toInteger $ F.toList (getVal d lat)
+            let longitudes = map toInteger $ F.toList (getVal d lon)
+            let keyvals = map toInteger $ F.toList (getVal d keys_vals)
             let info = getVal d denseinfo
-            let versions =  map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.version)
-            let timestamps = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp)
-            let changesets = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.changeset)
-            let uids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.uid)
-            let sids = map fromIntegral $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
+            let versions =  map toInteger $ F.toList (getVal info OSM.OSMFormat.DenseInfo.version)
+            let timestamps = map toInteger $ F.toList (getVal info OSM.OSMFormat.DenseInfo.timestamp)
+            let changesets = map toInteger $ F.toList (getVal info OSM.OSMFormat.DenseInfo.changeset)
+            let uids = map toInteger $ F.toList (getVal info OSM.OSMFormat.DenseInfo.uid)
+            let sids = map toInteger $ F.toList (getVal info OSM.OSMFormat.DenseInfo.user_sid)
             buildNodeData ids latitudes longitudes keyvals versions timestamps changesets uids sids
 
           buildNodeData :: [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [Integer] -> [ImportNode]
           buildNodeData ids lat lon keyvals versions timestamps changesets uids sids = do
-            let identifiers = deltaDecode ids 0
-            let latitudes = calculateDegrees (deltaDecode lat 0) gran
-            let longitudes = calculateDegrees (deltaDecode lon 0) gran
-            let decodedTimestamps = deltaDecode timestamps 0
-            let decodedChangesets = deltaDecode changesets 0
-            let decodedUIDs = deltaDecode uids 0
-            let decodedUsers = deltaDecode sids 0
+            let identifiers = deltaDecode ids
+            let latitudes = calculateDegrees (deltaDecode lat) gran
+            let longitudes = calculateDegrees (deltaDecode lon) gran
+            let decodedTimestamps = deltaDecode timestamps
+            let decodedChangesets = deltaDecode changesets
+            let decodedUIDs = deltaDecode uids
+            let decodedUsers = deltaDecode sids
 
             buildNodes identifiers latitudes longitudes keyvals versions decodedTimestamps decodedChangesets decodedUIDs decodedUsers
 

@@ -21,11 +21,4 @@ module Types where
     data ImportNode         = ImportNode Id Latitude Longitude Tags Version Timestamp Changeset UID SID deriving Show
     data ImportWay          = ImportWay Id Tags Version Timestamp Changeset UID User Nodes deriving Show
     data ImportRelation     = ImportRelation Id Tags Version Timestamp Changeset User Members deriving Show
-
-    -- Next step make into one datatype to reduce complexity in the database handler
-    -- data ImportData = ImportNode Id Latitude Longitude Tags Version Timestamp Changeset UID SID
-    --                 | ImportWay Id Tags Version Timestamp Changeset UID User Nodes 
-    --                 | ImportRelation Id Tags Version Timestamp Changeset User Members
-    --                 | ImportTag Key Value deriving (Show)
-
     
