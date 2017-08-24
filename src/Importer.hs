@@ -1,13 +1,13 @@
  {-# LANGUAGE OverloadedStrings #-}
  {-# LANGUAGE FlexibleContexts #-}
  
-module Importer where
+module Importer 
+  (performImport)
+where 
 
 import Control.Monad (when)
 import Data.Binary.Get (Get, getWord32be, getLazyByteString, runGet, bytesRead)
 import Codec.Compression.Zlib (decompress)
-import System.Exit (exitFailure)
-import System.IO (hPutStrLn, stderr)
 import qualified Data.ByteString.Lazy as BL (readFile, length, ByteString)
 import Data.String.Utils (replace)
 import Text.ProtocolBuffers.Basic(ByteString,uToString)
@@ -16,7 +16,6 @@ import qualified Data.ByteString.Lazy.UTF8 as U (toString)
 import Text.ProtocolBuffers (messageGet,getVal)
 
 import Common(nano,deltaDecode,calculateDegrees)
-import qualified Database as MDB (openConnection,closeConnection,saveNodes,saveWays,saveRelation)
 import Types
 
 import OSM.FileFormat.Blob
@@ -46,15 +45,6 @@ getChunks limit location chunks
     let location' = fromIntegral bytesRead'
     getChunks limit location' ((Chunk blobHeader blob') : chunks)
  | otherwise = return $ reverse chunks
-
-startImport :: String -> String -> String -> IO ()
-startImport dbconnection dbname filename = do
-  pipe <- MDB.openConnection dbconnection
-  let dbNodecommand recs = MDB.saveNodes pipe dbname recs
-  let dbWaycommand recs = MDB.saveWays pipe dbname recs
-  let dbRelationcommand recs = MDB.saveRelation pipe dbname recs
-  performImport filename dbNodecommand dbWaycommand dbRelationcommand
-  MDB.closeConnection pipe
 
 performImport :: FilePath -> ([ImportNode] -> IO ()) -> ([ImportWay] -> IO ()) -> ([ImportRelation] -> IO ()) -> IO ()
 performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
@@ -195,9 +185,6 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
                                      uid
                                      (st !! (fromIntegral sid :: Int))
                                     : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) versions timestamps changesets uids sids
-          -- buildNodes (id:ids) (lat:lats) (long:longs) keyvals [] [] [] [] [] =
-          --                 N.ImportNodeSmall id lat long (fst $ lookupMixedKeyVals keyvals) : buildNodes ids lats longs (snd $ lookupMixedKeyVals keyvals) [] [] [] [] []
-
 
           lookupMixedKeyVals :: [Integer] -> ([ImportTag], [Integer])
           lookupMixedKeyVals keyvals= splitKeyVal keyvals []
@@ -219,9 +206,3 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
           -- Fixes Mongos no . in the field name rule
           fixIllegalFieldName :: String -> String
           fixIllegalFieldName s = replace "." ":" s
-
-showUsage :: IO ()
-showUsage = do
-      hPutStrLn stderr "usage: dbconnection dbname filename"
-      hPutStrLn stderr "example: OSMImport '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
-      exitFailure

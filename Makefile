@@ -1,7 +1,7 @@
 BASE_DIR=$(shell pwd)
 
 # Default
-default: build
+#default: build
 
 # Download data
 download-uk-data:
