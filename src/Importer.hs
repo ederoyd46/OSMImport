@@ -1,9 +1,9 @@
  {-# LANGUAGE OverloadedStrings #-}
  {-# LANGUAGE FlexibleContexts #-}
- 
-module Importer 
+
+module Importer
   (performImport)
-where 
+where
 
 import Control.Monad (when)
 import Data.Binary.Get (Get, getWord32be, getLazyByteString, runGet, bytesRead)
@@ -194,15 +194,12 @@ performImport fileName dbNodecommand dbWaycommand dbRelationcommand = do
               splitKeyVal [] y = (y, [])
               splitKeyVal (x:xx:xs) y
                 | x == 0 = (y, (xx : xs))
-                | otherwise = splitKeyVal xs (ImportTag (fixIllegalFieldName $ st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
+                | otherwise = splitKeyVal xs (ImportTag (st !! (fromIntegral x :: Int)) (st !! (fromIntegral xx :: Int)) : y)
               splitKeyVal (_:_) y = (y, []) -- In the case that the array is on an unequal number, Can happen if the last couple of entries are 0
 
 
           lookupKeyVals :: [Int] -> [Int] -> [ImportTag]
           lookupKeyVals [] [] = []
           lookupKeyVals (x:xs) (y:ys) = do
-            ImportTag (fixIllegalFieldName $ st !! x) (st !! y) : lookupKeyVals xs ys
+            ImportTag (st !! x) (st !! y) : lookupKeyVals xs ys
 
-          -- Fixes Mongos no . in the field name rule
-          fixIllegalFieldName :: String -> String
-          fixIllegalFieldName s = replace "." ":" s
