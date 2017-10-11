@@ -8,10 +8,10 @@ import System.IO (hPutStrLn, stderr)
 import Database (openConnection,closeConnection,saveNodes,saveWays,saveRelation)
 
 main :: IO ()
-main =  do 
+main =  do
   args <- getArgs
   when (length args < 3) $ showUsage
-  
+
   let dbconnection = args !! 0
   let dbname = args !! 1
   let filename = args !! 2
@@ -25,11 +25,10 @@ startMongoImport dbconnection dbname filename = do
   let dbWaycommand = saveWays pipe dbname
   let dbRelationcommand = saveRelation pipe dbname
   performImport filename dbNodecommand dbWaycommand dbRelationcommand
-  closeConnection pipe  
+  closeConnection pipe
 
 showUsage :: IO ()
 showUsage = do
       hPutStrLn stderr "usage: dbconnection dbname filename"
       hPutStrLn stderr "example: OSMImport '127.0.0.1:27017' 'geo_data' './download/england-latest.osm.pbf'"
       exitFailure
-  
