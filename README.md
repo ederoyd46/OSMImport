@@ -8,8 +8,7 @@ It has been written in Haskell and was inspired by the https://github.com/larroy
 Build Instructions
 ------------------
 
-1. Run build-platform.sh to install the required cabal libraries and build the project
-2. Optionally you might want to run ". environment.sh" to add OSMImport to your path (only relevant if you're using cabal sandbox).
+1. Run `stack build``
 
 Usage
 -----
