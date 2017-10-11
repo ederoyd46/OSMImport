@@ -5,6 +5,9 @@ module Database where
   import Database.MongoDB hiding(timestamp)
   import qualified Data.Text as T
   import Control.Monad.IO.Class
+  import Control.Concurrent(forkIO, ThreadId)
+  -- import GHC.Conc.Sync.ThreadId
+  
 
   openConnection :: String -> IO Pipe
   openConnection dbconnection =
@@ -20,7 +23,8 @@ module Database where
 
   saveNodes :: Pipe -> String -> [ImportNode] -> IO ()
   saveNodes pipe dbname nodes = do
-    runDBCommand pipe dbname $ insertMany_ "node" (parseNodes nodes)
+    forkIO $ runDBCommand pipe dbname $ insertMany_ "node" (parseNodes nodes)
+    return ()
     where
       parseNodes [] = []
       parseNodes (ImportNode nodeId latitude longitude tags version timestamp changeset uid sid :xs) 
