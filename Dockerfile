@@ -1,5 +1,5 @@
 FROM fpco/stack-build
-MAINTAINER Matthew Brown <matt@ederoyd.co.uk>
+LABEL AUTHOR Matthew Brown <matt@ederoyd.co.uk>
 ENV DEBIAN_FRONTEND noninteractive
 
 ADD . /OSMImport
