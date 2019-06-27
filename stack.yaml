@@ -2,7 +2,7 @@ flags: {}
 packages:
 - '.'
 extra-deps: []
-resolver: lts-12.11
+resolver: lts-13.26
 nix:
   enable: false
   packages: [glpk pcre zlib binutils protobuf]
