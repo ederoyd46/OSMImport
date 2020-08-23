@@ -1,8 +1,11 @@
 flags: {}
 packages:
 - '.'
-extra-deps: []
-resolver: lts-14.27
+extra-deps: 
+ - protocol-buffers-2.4.13@sha256:4828394212fc606eeda9e81190fd177a80c6bab6b5815b1229cbb2a58038b859,2644
+ - protocol-buffers-descriptor-2.4.13@sha256:53692fc2f87325a0aaf55bad7f8a51fb0cbb59fcb6b30618e92ddf3b0dc23c8b,3292
+
+resolver: lts-16.10
 nix:
   enable: false
   packages: [glpk pcre zlib binutils protobuf]

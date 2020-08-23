@@ -3,10 +3,24 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: protocol-buffers-2.4.13@sha256:4828394212fc606eeda9e81190fd177a80c6bab6b5815b1229cbb2a58038b859,2644
+    pantry-tree:
+      size: 1106
+      sha256: 04b39b9af26bed81ddd6cc29747339942ee5af3dab091922b071a2986a9715fb
+  original:
+    hackage: protocol-buffers-2.4.13@sha256:4828394212fc606eeda9e81190fd177a80c6bab6b5815b1229cbb2a58038b859,2644
+- completed:
+    hackage: protocol-buffers-descriptor-2.4.13@sha256:53692fc2f87325a0aaf55bad7f8a51fb0cbb59fcb6b30618e92ddf3b0dc23c8b,3292
+    pantry-tree:
+      size: 3279
+      sha256: af612a7f46b7c3a61b594e5e0e2809ea17190c673bb44ec775920958cd9165b5
+  original:
+    hackage: protocol-buffers-descriptor-2.4.13@sha256:53692fc2f87325a0aaf55bad7f8a51fb0cbb59fcb6b30618e92ddf3b0dc23c8b,3292
 snapshots:
 - completed:
-    size: 524996
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/14/27.yaml
-    sha256: 7ea31a280c56bf36ff591a7397cc384d0dff622e7f9e4225b47d8980f019a0f0
-  original: lts-14.27
+    size: 532383
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/10.yaml
+    sha256: 469d781ab6d2a4eceed6b31b6e4ec842dcd3cd1d11577972e86902603dce24df
+  original: lts-16.10
