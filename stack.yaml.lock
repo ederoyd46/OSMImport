@@ -3,24 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: protocol-buffers-2.4.13@sha256:4828394212fc606eeda9e81190fd177a80c6bab6b5815b1229cbb2a58038b859,2644
-    pantry-tree:
-      size: 1106
-      sha256: 04b39b9af26bed81ddd6cc29747339942ee5af3dab091922b071a2986a9715fb
-  original:
-    hackage: protocol-buffers-2.4.13@sha256:4828394212fc606eeda9e81190fd177a80c6bab6b5815b1229cbb2a58038b859,2644
-- completed:
-    hackage: protocol-buffers-descriptor-2.4.13@sha256:53692fc2f87325a0aaf55bad7f8a51fb0cbb59fcb6b30618e92ddf3b0dc23c8b,3292
-    pantry-tree:
-      size: 3279
-      sha256: af612a7f46b7c3a61b594e5e0e2809ea17190c673bb44ec775920958cd9165b5
-  original:
-    hackage: protocol-buffers-descriptor-2.4.13@sha256:53692fc2f87325a0aaf55bad7f8a51fb0cbb59fcb6b30618e92ddf3b0dc23c8b,3292
 snapshots:
-- completed:
-    size: 532835
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/24.yaml
-    sha256: cf2b52420b2262fe9cf0f6744929120131abd6675b1c3fb2d8b155a47f80d103
-  original: lts-16.24
+- original: lts-17.15
+  completed:
+    sha256: 72e87841a0ab5b72f6f018e8ee692fd972b7bb32a944990f028e10d6eb528e63
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/15.yaml
+    size: 567679
+packages: []
